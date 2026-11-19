@@ -15,7 +15,10 @@ test('draft renderer refuses bad local robotic VO and muxes non-silent music/SFX
   const storyboard={id:'storyboard_audio',estimated_duration_sec:20,timeline:[{id:'tl_1',start_sec:0,end_sec:20,evidence_ids:['evi_1'],narration:script.voiceover,scene_template:'HookScene',beat_kind:'hook'}],captions:[{scene_id:'s1',start_sec:0,end_sec:5,text:'Audio real audible'}],preview_assets:[{evidence_id:'evi_1',path:asset,type:'screenshot',rights_status:'owned'}]};
   const draft=await createDraftArtifact({job_id:'job_audio',script,storyboard,outputsPath:out});
   assert.equal(draft.notes.audio_verified,true);
-  assert.equal(draft.notes.voiceover_path,null);
+  assert.ok(draft.notes.voiceover_path);
+  assert.ok(existsSync(draft.notes.voiceover_path));
+  assert.equal(draft.notes.voiceover_required,true);
+  assert.equal(draft.notes.voiceover_blocker,'acceptable_voiceover_source_missing');
   assert.equal(draft.notes.voiceover_source,null);
   assert.equal(draft.notes.product_voiceover_usable,false);
   assert.ok(existsSync(draft.notes.music_path));

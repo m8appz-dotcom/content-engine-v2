@@ -43,9 +43,13 @@ export async function runEvals(options:{renderDraft?:boolean}={}){
     writeFileSync(timelinePath,JSON.stringify({draft_id:'draft_eval_contract',render_type:'remotion_asset_backed_draft_mp4'}));
     const voicePath='outputs/evals/test-contract/voiceover.wav'; const musicPath='outputs/evals/test-contract/music.wav'; const sfxPath='outputs/evals/test-contract/sfx.wav';
     writeFileSync(voicePath,'contract placeholder: renderer test verifies actual audible voiceover'); writeFileSync(musicPath,'contract placeholder'); writeFileSync(sfxPath,'contract placeholder');
-    const draft={id:'draft_eval_contract',video_path:videoPath,contact_sheet_path:sheetPath,timeline_json_path:timelinePath,render_status:'draft_rendered',notes:{composer:'remotion',uses_real_preview_assets:true,placeholder_render:false,audio_verified:true,voiceover_path:voicePath,voiceover_source:'contract-placeholder',music_path:musicPath,sfx_path:sfxPath,audio_metrics:{mean_volume_db:-18,max_volume_db:-3}}};
+    // Contract-only fixture: these metadata assertions do not prove rendered speech or production readiness.
+    const draft={id:'draft_eval_contract',video_path:videoPath,contact_sheet_path:sheetPath,timeline_json_path:timelinePath,render_status:'draft_rendered',notes:{composer:'remotion',uses_real_preview_assets:true,placeholder_render:false,audio_verified:true,voiceover_path:voicePath,voiceover_source:'contract-placeholder',product_voiceover_usable:true,music_path:musicPath,sfx_path:sfxPath,audio_metrics:{mean_volume_db:-18,max_volume_db:-3}}};
     const qa=reviewDraft({job_id:fixture.job_id,draft,script:scripts[0],storyboard,evidence:fixture.evidence});
-    results.push(assertEval('draft QA contract golden pass', qa.pass===true && qa.scores.visual_proof===5, {qa}));
+    results.push(assertEval('draft QA contract golden pass', qa.pass===true && qa.scores.visual_proof===5 && qa.publish_ready===false, {qa}));
+    const missingVoice={...draft,notes:{...draft.notes,voiceover_source:null,product_voiceover_usable:false}};
+    const blocked=reviewDraft({job_id:fixture.job_id,draft:missingVoice,script:scripts[0],storyboard,evidence:fixture.evidence});
+    results.push(assertEval('draft QA contract blocks unusable product voice', blocked.pass===false && blocked.publish_ready===false && blocked.blocking_issues.includes('voiceover_source_missing') && blocked.blocking_issues.includes('product_voiceover_unusable'), {qa:blocked}));
   }
   const pass=results.every(r=>r.pass); const summary={ok:pass,passed:results.filter(r=>r.pass).length,total:results.length,results,created_at:new Date().toISOString()};
   mkdirSync('evals/reports',{recursive:true}); writeFileSync(path.join('evals/reports','latest.json'),JSON.stringify(summary,null,2));
