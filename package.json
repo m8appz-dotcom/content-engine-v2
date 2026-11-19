@@ -22,19 +22,19 @@
     "eval:qa": "tsx scripts/eval-qa.ts",
     "eval": "tsx evals/run-evals.ts",
     "smoke:codex": "tsx scripts/codex-structured-smoke.ts",
-    "ci": "npm run typecheck && npm test && npm run migrate && npm run smoke && npm run eval && npm run build && npm audit --omit=dev --audit-level=moderate"
+    "ci": "npm run typecheck && npm test && npm run migrate && npm run smoke && npm run eval && npm run build && npm audit --audit-level=low"
   },
   "dependencies": {
     "@mariozechner/pi-ai": "^0.73.1",
-    "@remotion/bundler": "^4.0.469",
-    "@remotion/renderer": "^4.0.469",
+    "@remotion/bundler": "4.0.545",
+    "@remotion/renderer": "4.0.545",
     "@types/better-sqlite3": "latest",
     "better-sqlite3": "latest",
-    "next": "^16.2.6",
+    "next": "^16.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "remotion": "^4.0.469",
-    "zod": "latest"
+    "remotion": "4.0.545",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "latest",
@@ -44,6 +44,9 @@
     "typescript": "latest"
   },
   "overrides": {
-    "postcss": "^8.5.10"
+    "postcss": "^8.5.33",
+    "@mariozechner/pi-ai": {
+      "proxy-agent": "8.0.3"
+    }
   }
 }

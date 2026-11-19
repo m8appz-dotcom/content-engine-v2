@@ -43,6 +43,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Prepare renderer browser
+        run: node --input-type=module -e "import {ensureBrowser} from '@remotion/renderer'; await ensureBrowser();"
+
       - name: Tests
         run: npm test
 
@@ -58,5 +61,5 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Production dependency audit
-        run: npm audit --omit=dev --audit-level=moderate
+      - name: Dependency audit (all packages)
+        run: npm audit --audit-level=low
