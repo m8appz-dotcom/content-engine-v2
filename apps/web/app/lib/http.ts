@@ -1,0 +1,4 @@
+import { ZodError, type ZodSchema } from 'zod';
+export async function readJson<T>(req:Request,schema:ZodSchema<T>):Promise<T>{ const body=await req.json().catch(()=>({})); return schema.parse(body); }
+export function json(data:unknown,status=200){ return Response.json(data,{status}); }
+export function errorResponse(error:unknown){ if(error instanceof ZodError) return Response.json({error:{code:'schema_validation_failed',message:'Invalid request body',details:error.flatten()}},{status:400}); const e=error as Error & {code?:string}; const code=e.code || 'internal_error'; const status=code==='not_found'?404:code==='invalid_state_transition'?409:code==='unauthorized'?401:code==='forbidden'?403:400; return Response.json({error:{code,message:e.message || 'Unknown error',details:{}}},{status}); }

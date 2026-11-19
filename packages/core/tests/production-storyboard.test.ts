@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { unlinkSync } from 'node:fs';
+import { migrate } from '../src/db/client';
+import { addEvidence, createJob, createProductionPlan, createScriptCandidate, createStoryboard, createStoryAngle, transitionJob, updateScriptStatus } from '../src/db/repositories';
+import { generateEvidenceBackedAngles } from '../src/artifacts/story-miner';
+import { generateEvidenceBackedScripts } from '../src/artifacts/scriptwriter';
+import { createProductionPlanArtifact } from '../src/artifacts/production-planner';
+import { createStoryboardArtifact } from '../src/artifacts/storyboarder';
+
+test('approved script produces production plan and storyboard preview',()=>{
+  const dbPath=`/tmp/content-engine-v2-storyboard-${Date.now()}.sqlite`;
+  const db=migrate(dbPath);
+  const job=createJob(db,{title:'Storyboard'});
+  transitionJob(db,job.id,'evidence_collecting'); transitionJob(db,job.id,'evidence_collected');
+  const ev=addEvidence(db,{job_id:job.id,type:'screenshot',title:'Visual proof',path:'outputs/evidence/proof.png',rights_status:'owned',privacy_level:'public',public_safe:true,metadata:{}}) as any;
+  const angle=generateEvidenceBackedAngles({job_id:job.id,evidence:[ev]})[0];
+  createStoryAngle(db,{job_id:job.id,angle}); transitionJob(db,job.id,'angles_generating'); transitionJob(db,job.id,'angles_generated');
+  const script=generateEvidenceBackedScripts({job_id:job.id,angle,evidence:[ev],count:1})[0];
+  createScriptCandidate(db,{job_id:job.id,script}); transitionJob(db,job.id,'scripts_generating'); transitionJob(db,job.id,'scripts_generated'); transitionJob(db,job.id,'script_pending_approval');
+  updateScriptStatus(db,job.id,script.id,'approved'); transitionJob(db,job.id,'script_approved');
+  const plan=createProductionPlanArtifact({job_id:job.id,script,evidence:[ev]});
+  const planRow=createProductionPlan(db,{job_id:job.id,script_id:script.id,plan});
+  transitionJob(db,job.id,'production_planning'); transitionJob(db,job.id,'production_planned');
+  const storyboard=createStoryboardArtifact({job_id:job.id,script,production_plan:planRow});
+  createStoryboard(db,{job_id:job.id,script_id:script.id,production_plan_id:plan.id,storyboard});
+  transitionJob(db,job.id,'storyboard_generating'); transitionJob(db,job.id,'storyboard_ready');
+  assert.equal(plan.scenes.length,script.beats.length);
+  assert.equal(storyboard.timeline.length,script.beats.length);
+  assert.equal(storyboard.readability_check.every_factual_beat_has_evidence,true);
+  db.close(); unlinkSync(dbPath);
+});

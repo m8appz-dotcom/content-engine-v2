@@ -1,0 +1,33 @@
+import fs from 'fs';
+import path from 'path';
+import { execFileSync } from 'child_process';
+const root='outputs/remakes/contract-video-v1';
+const framesDir=path.join(root,'frames-fast'); fs.rmSync(framesDir,{recursive:true,force:true}); fs.mkdirSync(framesDir,{recursive:true}); fs.mkdirSync(path.join(root,'audio'),{recursive:true}); fs.mkdirSync(path.join(root,'artifacts'),{recursive:true});
+const W=1080,H=1920,FPS=12;
+const beats=[
+ {id:'b1',dur:4,asset:'app_contract_full.png',palette:['#ff5a5f','#08080d'],giant:['ANTES: PROMESA'],detail:'El prompt decía “usa clips”… pero nada lo exigía.',motion:'scroll_freeze'},
+ {id:'b2',dur:4,asset:'contract_ui_final.png',palette:['#06b6d4','#f8fafc'],giant:['AHORA: CONTRATO'],detail:'Un nodo visible controla obligaciones antes de producir.',motion:'magnet_pull'},
+ {id:'b3',dur:4,asset:'human_approval_ui.png',palette:['#f472b6','#fde047'],giant:['AGENTES','CON DEUDA'],detail:'Cada rol produce artifacts consumibles.',motion:'split_stack'},
+ {id:'b4',dur:4,asset:'staging_contact_sheet.png',palette:['#86efac','#0f172a'],giant:['MISSING → READY'],detail:'5 clips reales + 3 b-rolls visibles.',motion:'before_after'},
+ {id:'b5',dur:4,asset:'production_frames.jpg',palette:['#facc15','#0f172a'],giant:['USED O NO PASA'],detail:'Renderer usa shot_asset_map + timing.',motion:'stamp'},
+ {id:'b6',dur:4,asset:'contract_ui_final.png',palette:['#fff7ed','#0f172a'],giant:['NO MÁS','CARDS GENÉRICAS'],detail:'Artifacts visibles, no promesas del prompt.',motion:'cta_loop'},
+];
+const script=fs.readFileSync(path.join(root,'artifacts/voiceover_script.txt'),'utf8').trim();
+const total=beats.reduce((a,b)=>a+b.dur,0);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function data(asset){ const p=path.resolve(root,'assets',asset); return {b64:fs.readFileSync(p).toString('base64'), mime:/\.jpe?g$/i.test(p)?'image/jpeg':'image/png'}; }
+const imgCache=Object.fromEntries(beats.map(b=>[b.asset,data(b.asset)]));
+function frameSvg(n){
+ const t=n/FPS; let acc=0, idx=0; for(; idx<beats.length; idx++){ if(t<acc+beats[idx].dur) break; acc+=beats[idx].dur; } const b=beats[Math.min(idx,beats.length-1)]; const local=(t-acc)/b.dur; const im=imgCache[b.asset];
+ const [accent,bg]=b.palette; const scale=1.01+0.06*Math.sin(local*Math.PI); const shift=(local-.5)*110; const phraseY=idx%2===0?210:1245; const imageY=idx%2===0?570:190; const textColor=idx===1?'#071018':'#ffffff'; const cardH=b.giant.length>1?350:270;
+ const lines=b.giant.map((line,i)=>`<text x="105" y="${phraseY+i*76}" font-family="Arial Black,Inter,Arial,sans-serif" font-size="62" font-weight="900" fill="${textColor}">${esc(line)}</text>`).join('');
+ return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${accent}"/><stop offset="1" stop-color="${bg}"/></linearGradient><filter id="shadow"><feDropShadow dx="0" dy="22" stdDeviation="24" flood-color="#000" flood-opacity="0.45"/></filter></defs><rect width="${W}" height="${H}" fill="${bg}"/><circle cx="${180+idx*95}" cy="${260+idx*70}" r="${260+55*local}" fill="${accent}" opacity="0.22"/><rect x="42" y="42" width="996" height="1836" rx="54" fill="none" stroke="${accent}" stroke-width="5" opacity="0.75"/><text x="70" y="104" font-family="Inter,Arial,sans-serif" font-size="33" font-weight="900" fill="${accent}">CONTRACT VIDEO / 0${idx+1}</text><g transform="translate(${shift} ${imageY}) scale(${scale})" filter="url(#shadow)"><rect x="92" y="0" width="896" height="930" rx="36" fill="#fff" opacity="0.08"/><image href="data:${im.mime};base64,${im.b64}" x="116" y="24" width="848" height="882" preserveAspectRatio="xMidYMid slice"/></g><rect x="70" y="${phraseY-92}" width="940" height="${cardH}" rx="34" fill="url(#g)" opacity="0.96" filter="url(#shadow)"/>${lines}<text x="108" y="${phraseY+(b.giant.length>1?154:80)}" font-family="Inter,Arial,sans-serif" font-size="30" font-weight="800" fill="${textColor}" opacity="0.94">${esc(b.detail)}</text><text x="75" y="1815" font-family="Inter,Arial,sans-serif" font-size="29" font-weight="900" fill="${accent}">1 frase gigante + 1 visual real + 1 detalle verificable</text></svg>`;
+}
+const frameCount=Math.round(total*FPS); for(let n=0;n<frameCount;n++) fs.writeFileSync(path.join(framesDir,`f${String(n).padStart(5,'0')}.svg`),frameSvg(n));
+execFileSync('ffmpeg',['-y','-f','lavfi','-i',`sine=frequency=174:duration=${total}:sample_rate=48000`,'-f','lavfi','-i',`sine=frequency=880:duration=0.08:sample_rate=48000`,'-filter_complex',`[0:a]volume=0.06[a0];[1:a]adelay=900|900,apad,atrim=0:${total},volume=0.25[a1];[a0][a1]amix=inputs=2:duration=first,loudnorm=I=-22:TP=-2:LRA=8[a]`,'-map','[a]',path.join(root,'audio','music_sfx_bed.wav')],{stdio:'ignore'});
+execFileSync('ffmpeg',['-y','-thread_queue_size','512','-framerate',String(FPS),'-i',path.join(framesDir,'f%05d.svg'),'-i',path.join(root,'audio','music_sfx_bed.wav'),'-vf','fps=30','-c:v','libx264','-preset','ultrafast','-crf','20','-pix_fmt','yuv420p','-r','30','-c:a','aac','-b:a','160k','-shortest',path.join(root,'contract-remake-v1.mp4')],{stdio:'inherit'});
+let start=0; const shotMap=beats.map(b=>{const row={beat_id:b.id,start_sec:start,end_sec:start+b.dur,asset_id:path.parse(b.asset).name,asset_path:`outputs/remakes/contract-video-v1/assets/${b.asset}`,motion:b.motion,intended_read:b.giant.join(' '),forbidden_reads:['generic cards as primary','unmapped assets','cut voiceover']}; start+=b.dur; return row;});
+fs.writeFileSync(path.join(root,'artifacts','shot_asset_map.json'),JSON.stringify({version:'shot_asset_map_v1',style_reference_id:'impressed_v5_visual_story',beats:shotMap},null,2));
+fs.writeFileSync(path.join(root,'artifacts','style_reference.json'),JSON.stringify({id:'impressed_v5_visual_story',rules:['kinetic typography','palette by chapter','real before/after proof','feed/scroll/magnet/split-screen metaphors','one giant phrase + one real visual + one detail','no generic UI cards/microtext as body']},null,2));
+fs.writeFileSync(path.join(root,'artifacts','voiceover_timing.json'),JSON.stringify({version:'voiceover_timing_v1',voiceover_required:true,status:'blocked_acceptable_tts_missing',script_text:script,total_duration_sec:total,derive_video_duration_from_audio:true,beats:shotMap.map(x=>({beat_id:x.beat_id,start_sec:x.start_sec,end_sec:x.end_sec,line:''})),blocker:'OpenClaw TTS convert aborted with SIGKILL; rendered with non-silent music/SFX bed only until acceptable voiceover is available.'},null,2));
+console.log(JSON.stringify({ok:true,video:path.join(root,'contract-remake-v1.mp4'),duration:total,frames:frameCount},null,2));

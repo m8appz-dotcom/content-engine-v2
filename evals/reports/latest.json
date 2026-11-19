@@ -1,0 +1,166 @@
+{
+  "ok": false,
+  "passed": 5,
+  "total": 6,
+  "results": [
+    {
+      "name": "story-miner returns 3 schema-valid evidence-backed angles",
+      "pass": true,
+      "score": 1,
+      "details": {
+        "count": 3
+      }
+    },
+    {
+      "name": "scriptwriter returns schema-valid script with mapped claims",
+      "pass": true,
+      "score": 1,
+      "details": {
+        "claims": 1
+      }
+    },
+    {
+      "name": "claim verifier approves golden script",
+      "pass": true,
+      "score": 1,
+      "details": {
+        "script_id": "script_ff3804a4-c9aa-4884-bf23-c49412e7c18f",
+        "claim_checks": [
+          {
+            "id": "claim_9320ef15-6607-4ee9-8e07-eb27ac471801",
+            "script_id": "script_ff3804a4-c9aa-4884-bf23-c49412e7c18f",
+            "claim_text": "El contenido se construye desde evidencia real y revisable antes de producirse públicamente",
+            "claim_type": "control",
+            "support_level": "direct",
+            "evidence_ids": [
+              "evi_2"
+            ],
+            "public_safe": true,
+            "requires_human_approval": false,
+            "rewrite_suggestion": null,
+            "reason": "Claim has mapped evidence.",
+            "valid": true
+          }
+        ],
+        "overall_pass": true
+      }
+    },
+    {
+      "name": "claim verifier blocks missing evidence",
+      "pass": true,
+      "score": 1,
+      "details": {
+        "script_id": "script_ff3804a4-c9aa-4884-bf23-c49412e7c18f",
+        "claim_checks": [
+          {
+            "id": "claim_9320ef15-6607-4ee9-8e07-eb27ac471801",
+            "script_id": "script_ff3804a4-c9aa-4884-bf23-c49412e7c18f",
+            "claim_text": "El contenido se construye desde evidencia real y revisable antes de producirse públicamente",
+            "claim_type": "control",
+            "support_level": "direct",
+            "evidence_ids": [
+              "evi_2"
+            ],
+            "public_safe": true,
+            "requires_human_approval": false,
+            "rewrite_suggestion": null,
+            "reason": "Claim has mapped evidence.",
+            "valid": true
+          },
+          {
+            "id": "bad",
+            "script_id": "script_ff3804a4-c9aa-4884-bf23-c49412e7c18f",
+            "claim_text": "Unsupported claim",
+            "claim_type": "factual",
+            "support_level": "unsupported",
+            "evidence_ids": [],
+            "public_safe": true,
+            "requires_human_approval": false,
+            "rewrite_suggestion": "Rewrite as a process description or remove the claim.",
+            "reason": "Claim has no evidence mapping in this job.",
+            "valid": false
+          }
+        ],
+        "overall_pass": false
+      }
+    },
+    {
+      "name": "privacy scan finds secret/email patterns",
+      "pass": true,
+      "score": 1,
+      "details": [
+        {
+          "type": "email",
+          "match": "bad…com",
+          "severity": "medium",
+          "reason": "Email address detected"
+        },
+        {
+          "type": "phone",
+          "match": "123…890",
+          "severity": "medium",
+          "reason": "Possible phone number detected"
+        },
+        {
+          "type": "api_key",
+          "match": "tok…def",
+          "severity": "high",
+          "reason": "Possible credential/token detected"
+        }
+      ]
+    },
+    {
+      "name": "draft QA contract golden pass",
+      "pass": false,
+      "score": 0,
+      "details": {
+        "qa": {
+          "id": "qa_2e35c36e-bbda-48bb-bb0c-79a3395cd404",
+          "job_id": "job_eval",
+          "draft_id": "draft_eval_contract",
+          "scores": {
+            "evidence_support": 3,
+            "rights_safety": 5,
+            "privacy_safety": 5,
+            "sme_clarity": 5,
+            "hook_strength": 5,
+            "narrative_coherence": 5,
+            "visual_proof": 3,
+            "caption_readability": 5,
+            "audio_quality": 2,
+            "pace": 4
+          },
+          "editorial_criteria": {
+            "must_read": [
+              "viewer reads evidence-backed story with explicit human approval"
+            ],
+            "must_not_read": [
+              "silent video",
+              "unsupported claim",
+              "synthetic approval presented as human"
+            ],
+            "quality_bars": [
+              "evidence first",
+              "beat changes visual/audio",
+              "human approval explicit"
+            ],
+            "approval_questions": [
+              "Does the viewer read the intended message?"
+            ],
+            "qa_blockers": [
+              "editorial_criteria_missing"
+            ]
+          },
+          "blocking_issues": [
+            "product_voiceover_unusable"
+          ],
+          "non_blocking_issues": [],
+          "pass": false,
+          "publish_ready": false,
+          "gate_b_note": "QA failed; publish blocked."
+        }
+      }
+    }
+  ],
+  "created_at": "2026-06-02T17:32:58.012Z"
+}

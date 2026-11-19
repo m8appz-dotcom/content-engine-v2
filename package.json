@@ -1,16 +1,49 @@
 {
-  "name": "template-nextjs-supabase",
+  "name": "content-engine-v2",
   "private": true,
   "version": "0.1.0",
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
+    "dev": "next dev apps/web",
+    "build": "next build apps/web --webpack",
+    "start": "next start apps/web",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --test-concurrency=1 --import tsx packages/core/tests/*.test.ts packages/video/tests/*.test.ts packages/qa/tests/*.test.ts packages/providers/tests/*.test.ts services/crew/tests/*.test.ts apps/web/tests/*.test.ts",
+    "migrate": "tsx scripts/migrate.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "check": "npm run typecheck && npm test && npm run migrate && npm run smoke && npm run eval",
+    "lint": "tsc --noEmit",
+    "test:e2e": "tsx scripts/smoke.ts",
+    "db:migrate": "npm run migrate",
+    "eval:schemas": "tsx scripts/eval-schemas.ts",
+    "eval:story-miner": "tsx scripts/eval-story-miner.ts",
+    "eval:scriptwriter": "tsx scripts/eval-scriptwriter.ts",
+    "eval:claims": "tsx scripts/eval-claims.ts",
+    "eval:qa": "tsx scripts/eval-qa.ts",
+    "eval": "tsx evals/run-evals.ts",
+    "smoke:codex": "tsx scripts/codex-structured-smoke.ts",
+    "ci": "npm run typecheck && npm test && npm run migrate && npm run smoke && npm run eval && npm run build && npm audit --omit=dev --audit-level=moderate"
   },
   "dependencies": {
-    "next": "15.3.1",
+    "@mariozechner/pi-ai": "^0.73.1",
+    "@remotion/bundler": "^4.0.469",
+    "@remotion/renderer": "^4.0.469",
+    "@types/better-sqlite3": "latest",
+    "better-sqlite3": "latest",
+    "next": "^16.2.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "@supabase/supabase-js": "2.49.8"
+    "remotion": "^4.0.469",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  },
+  "overrides": {
+    "postcss": "^8.5.10"
   }
 }

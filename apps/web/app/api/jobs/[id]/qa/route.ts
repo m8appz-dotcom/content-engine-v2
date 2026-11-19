@@ -1,0 +1,9 @@
+import { z } from 'zod';
+import { getDb } from '../../../../lib/db';
+import { errorResponse, json, readJson } from '../../../../lib/http';
+import { withIdempotency } from '../../../../lib/idempotency';
+import { createQaReport, ensureState, getDraft, getJob, getScriptCandidate, getStoryboard, listEvidence, listQaReports, transitionJob, withTaskRun } from '../../../../../../../packages/core/src/db/repositories';
+import { reviewDraft } from '../../../../../../../packages/qa/src/scoring/qa-reviewer';
+const RequestSchema=z.object({draft_id:z.string().min(1)});
+export async function GET(_req:Request,{params}:{params:Promise<{id:string}>}){ try{ const {id}=await params; return json({job_id:id,qa_reports:listQaReports(getDb(),id)}); }catch(e){return errorResponse(e);} }
+export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){ try{ const {id}=await params; const input=await readJson(req,RequestSchema); const db=getDb(); return withIdempotency(req,db,`POST /api/jobs/${id}/qa`,input,async()=>withTaskRun(db,{job_id:id,task_type:'qa',input},async()=>{ const job=getJob(db,id); if(!job) throw Object.assign(new Error('Job not found'),{code:'not_found'}); ensureState(job,['draft_rendered','qa_failed']); const draft=getDraft(db,id,input.draft_id); if(!draft) throw Object.assign(new Error('Draft not found'),{code:'not_found'}); const script=getScriptCandidate(db,id,draft.script_id); const storyboard=getStoryboard(db,id,draft.storyboard_id); if(!script || !storyboard) throw Object.assign(new Error('Draft dependencies missing'),{code:'business_validation_failed'}); transitionJob(db,id,'qa_pending'); const report=reviewDraft({job_id:id,draft,script,storyboard,evidence:listEvidence(db,id)}); const row=createQaReport(db,{job_id:id,draft_id:input.draft_id,report}); const next=transitionJob(db,id,report.pass?'qa_passed':'qa_failed'); return json({job_id:id,status:next.status,qa_report:row}); })); }catch(e){return errorResponse(e);} }

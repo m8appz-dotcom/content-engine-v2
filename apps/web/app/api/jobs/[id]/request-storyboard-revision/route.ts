@@ -1,0 +1,6 @@
+import { z } from 'zod';
+import { getDb } from '../../../../lib/db';
+import { errorResponse, json, readJson } from '../../../../lib/http';
+import { createApproval, ensureState, getJob, transitionJob, updateStoryboardStatus } from '../../../../../../../packages/core/src/db/repositories';
+const RequestSchema=z.object({storyboard_id:z.string().min(1),actor_id:z.string().optional().nullable(),notes:z.string().optional().nullable()});
+export async function POST(req:Request,{params}:{params:Promise<{id:string}>}){ try{ const {id}=await params; const input=await readJson(req,RequestSchema); const db=getDb(); const job=getJob(db,id); if(!job) throw Object.assign(new Error('Job not found'),{code:'not_found'}); ensureState(job,['storyboard_ready']); const storyboard=updateStoryboardStatus(db,id,input.storyboard_id,'needs_revision',{notes:input.notes}); const approval=createApproval(db,{job_id:id,artifact_id:input.storyboard_id,gate:'Storyboard Approval',status:'needs_revision',approved_by:input.actor_id,notes:input.notes,metadata:{}}); const next=transitionJob(db,id,'storyboard_needs_revision'); return json({job_id:id,status:next.status,storyboard,approval}); }catch(e){return errorResponse(e);} }

@@ -1,0 +1,60 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync, existsSync, statSync, writeFileSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { createDraftArtifact } from '../src/renderer/draft-renderer';
+
+const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'><rect width='1080' height='1920' fill='#123'/><text x='80' y='250' font-size='82' fill='white'>Prueba real</text><text x='80' y='380' font-size='52' fill='#66e3a2'>Sistema funcionando</text></svg>`;
+
+test('draft renderer refuses placeholder-only storyboards',async()=>{
+  const out=mkdtempSync(path.join(tmpdir(),'ce2-render-empty-'));
+  const script={id:'script_test',hook:'Hook claro para pyme',cta:'CTA',duration_sec:20};
+  const storyboard={id:'storyboard_test',estimated_duration_sec:20,timeline:[{id:'tl_1',start_sec:0,end_sec:5,evidence_ids:['evi_1']}],captions:[{scene_id:'s1',start_sec:0,end_sec:5,text:'Caption legible'}],preview_assets:[]};
+  await assert.rejects(()=>createDraftArtifact({job_id:'job_test',script,storyboard,outputsPath:out}),/requires real preview_assets/);
+  rmSync(out,{recursive:true,force:true});
+});
+
+test('draft renderer creates asset-backed Remotion mp4, timeline json, and png contact sheet',async()=>{
+  const out=mkdtempSync(path.join(tmpdir(),'ce2-render-'));
+  const asset=path.join(out,'evidence.png');
+  writeFileSync(asset.replace('.png','.svg'),svg); const svgAsset=asset.replace('.png','.svg');
+  const script={id:'script_test',hook:'Convertí una prueba real en una historia clara para una pyme',cta:'CTA',duration_sec:20,beats:[{line:'Mira la prueba real primero.'}]};
+  const derived1=path.join(out,'derived1.svg'); const derived2=path.join(out,'derived2.svg'); writeFileSync(derived1,svg.replace('Prueba real','Derived Hook')); writeFileSync(derived2,svg.replace('Prueba real','Derived Proof'));
+  const storyboard={id:'storyboard_test',estimated_duration_sec:20,timeline:[{id:'tl_1',scene_id:'scene_1',start_sec:0,end_sec:6,evidence_ids:['evi_1'],narration:'Mira la prueba real primero.',scene_template:'HookScene',beat_kind:'hook',motion_intent:'proof reveal',vfx_intent:'headline label'},{id:'tl_2',scene_id:'scene_2',start_sec:6,end_sec:12,evidence_ids:['evi_1'],narration:'Ahora zoom a la prueba.',scene_template:'ProofZoomScene',beat_kind:'proof',motion_intent:'detail push',vfx_intent:'focus box'},{id:'tl_3',scene_id:'scene_3',start_sec:12,end_sec:20,evidence_ids:['evi_1'],narration:'Cierra con aprobación humana.',scene_template:'CtaScene',beat_kind:'cta',motion_intent:'settle',vfx_intent:'approval badge'}],captions:[{scene_id:'s1',start_sec:0,end_sec:5,text:'Mira la prueba real primero'}],preview_assets:[{evidence_id:'evi_1',path:svgAsset,type:'screenshot',rights_status:'owned'}],derived_visual_assets:{assets:[{scene_id:'scene_1',source_evidence_id:'evi_1',output_path:derived1},{scene_id:'scene_2',source_evidence_id:'evi_1',output_path:derived2}]}};
+  const draft=await createDraftArtifact({job_id:'job_test',script,storyboard,outputsPath:out});
+  assert.equal(draft.notes.composer,'remotion');
+  assert.equal(draft.notes.scene_library_version,'v1');
+  assert.equal(draft.notes.uses_scene_templates,true);
+  assert.equal(draft.notes.uses_real_preview_assets,true);
+  assert.equal(draft.notes.uses_derived_visual_assets,true);
+  assert.equal(draft.notes.derived_visual_asset_count,2);
+  assert.equal(draft.notes.audio_verified,true);
+  assert.equal(draft.notes.voiceover_source,null);
+  assert.equal(draft.notes.product_voiceover_usable,false);
+  assert.equal(draft.notes.voiceover_blocker,'acceptable_voiceover_source_missing');
+  assert.ok(draft.notes.voiceover_path);
+  assert.ok(existsSync(draft.notes.voiceover_path));
+  assert.ok(existsSync(draft.notes.music_path));
+  assert.ok(existsSync(draft.notes.sfx_path));
+  assert.ok(Number(draft.notes.audio_metrics.mean_volume_db)>-45);
+  assert.ok(Number(draft.notes.audio_metrics.max_volume_db)>-30);
+  assert.equal(draft.notes.placeholder_render,false);
+  assert.ok(draft.video_path.endsWith('.mp4'));
+  assert.ok(draft.contact_sheet_path.endsWith('.png'));
+  assert.ok(existsSync(draft.video_path));
+  assert.ok(existsSync(draft.timeline_json_path));
+  assert.ok(existsSync(draft.contact_sheet_path));
+  const timeline=JSON.parse(readFileSync(draft.timeline_json_path,'utf8'));
+  assert.equal(timeline.scene_library_version,'v1');
+  assert.deepEqual(timeline.scene_templates_used,['HookScene','ProofZoomScene','CtaScene']);
+  assert.equal(new Set(timeline.remotion_scenes.map((s:any)=>s.sceneTemplate)).size,3);
+  assert.ok(statSync(draft.video_path).size>1000);
+  assert.ok(statSync(draft.contact_sheet_path).size>1000);
+  const ffprobe=execFileSync('ffprobe',['-v','error','-select_streams','a:0','-show_entries','stream=codec_name','-of','csv=p=0',draft.video_path],{encoding:'utf8'}).trim();
+  assert.equal(ffprobe,'aac');
+  const vol=spawnSync('ffmpeg',['-i',draft.video_path,'-af','volumedetect','-f','null','-'],{encoding:'utf8'});
+  assert.match(`${vol.stdout}\n${vol.stderr}`,/mean_volume:/);
+  rmSync(out,{recursive:true,force:true});
+});

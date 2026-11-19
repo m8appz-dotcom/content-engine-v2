@@ -1,0 +1,2 @@
+export function apiError(code:string,message:string,details:Record<string,unknown>={}){ return Response.json({ error:{ code, message, details } }, { status: code==='not_found'?404:code==='invalid_state_transition'?409:400 }); }
+export function normalizeError(error:unknown){ const e=error as Error & { code?:string }; return { code:e.code || 'internal_error', message:e.message || 'Unknown error' }; }

@@ -1,0 +1,20 @@
+[Unit]
+Description=Content Engine v2 %i
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/m8apps/projects/content-engine-v2
+EnvironmentFile=/home/m8apps/projects/content-engine-v2/deploy/env/%i.env
+ExecStartPre=/usr/bin/env bash -lc 'npm run migrate'
+ExecStart=/usr/bin/env bash -lc 'npm start -- --hostname ${HOSTNAME:-127.0.0.1} --port ${PORT}'
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ReadWritePaths=/home/m8apps/projects/content-engine-v2/data /home/m8apps/projects/content-engine-v2/outputs /home/m8apps/projects/content-engine-v2/apps/web/.next/cache
+
+[Install]
+WantedBy=default.target
