@@ -67,7 +67,7 @@ The [dated historical report](evals/reports/archive/2026-06-02.json) preserves a
 
 Deterministic checks exercise contracts and gates. They do not measure real-provider generation quality, latency, or cost. A recorded end-to-end provider run remains needed for those claims.
 
-Draft output in this MVP includes structured preview, contact-sheet, and timeline JSON under `outputs/drafts/{job_id}`. Final export and publishing endpoints remain blocked. Passing QA alone does not publish content.
+The draft renderer produces an H.264 MP4 and timeline JSON under `outputs/drafts/{job_id}/{script_id}`, plus a PNG contact sheet under `outputs/contact-sheets/{job_id}/{script_id}`. CI exercises this real renderer. Final export and publishing endpoints remain blocked. Passing QA alone does not publish content.
 
 ## API and approval gates
 
@@ -94,6 +94,6 @@ Story angles require at least one public-safe visual evidence item with owned/li
 
 Gate A approval requires valid script schema, claim-evidence mappings, no unsupported claims, no prohibited public language, and explicit reviewer understanding of the angle/benefit.
 
-Storyboard preview is evidence-first and preview-only; final render/export remains blocked until later QA slices.
+Storyboard approval precedes draft rendering. Final export remains blocked in this MVP slice.
 
-Draft MVP writes structured preview/contact-sheet/timeline JSON artifacts under `outputs/drafts/{job_id}`. QA Gate B can pass but publish requires explicit approval and export/publish remain blocked until their own slice.
+QA Gate B reviews the draft artifacts. Publishing requires explicit approval, and final export/publish endpoints remain blocked until their own implementation slice.
