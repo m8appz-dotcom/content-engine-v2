@@ -2,6 +2,8 @@
 
 Choose one of three English story examples. Edit its script, compare a claim with the source, and approve the current revision. Export the approved storyboard. Editing the script resets approval.
 
+See [ENGINES.md](ENGINES.md) for the actual engine connection, additional runtime setup, credentials and acceptance limits.
+
 ## Run locally
 
 Requires Node.js 22 or newer and npm. From the repository root:
@@ -33,7 +35,7 @@ The included server integrates FIDO2/WebAuthn for optional private workspace cop
 
 ## Boundaries
 
-No model generation, database integration, rendering or publication is performed.
+Storyboard planning and evidence-reference checks run through the repository engine. No model generation, production database write, finished video rendering or publication is performed.
 
 The local server supports its documented localhost origin. This change does not deploy a public service or make these local workspaces production-ready. A public deployment needs a stable HTTPS origin/RP ID, durable protected storage, retention policy and completed holder acceptance. No provider keys or production data are included. No Spark data or services are touched.
 

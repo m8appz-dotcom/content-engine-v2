@@ -1,3 +1,4 @@
+import { engineAction, showEngineResult } from "./engine-client.js";
 import {
   $,
   $$,
@@ -77,7 +78,7 @@ function render() {
                     .map((p) => `<p>${esc(p)}</p>`)
                     .join("")}</div>`
             }<p class="script-status quiet">${words(script)} words · Revision ${state.revision[selected]} · ${approved ? "Approved" : "Awaiting review"}</p></section></div>`
-    }<section class="content-proof"><div><span>Linked evidence</span>01 source · 01 claim to review</div><button data-review>Inspect the claim ↗</button></section><footer class="review-footer"><span>English adaptation · authored example</span><button class="text-button" data-export>Export draft ↓</button></footer></main></div>`,
+    }<section class="content-proof"><div><span>Linked evidence</span>01 source · 01 claim to review</div><div class="action-row"><button data-review>Inspect the claim ↗</button><button data-engine-plan>Create storyboard</button></div></section><footer class="review-footer"><span>English adaptation · authored example</span><button class="text-button" data-export>Export draft ↓</button></footer></main></div>`,
     () => {
       $$("[data-story]").forEach(
         (b) =>
@@ -102,6 +103,18 @@ function render() {
               `<pre>${esc(source)}</pre>`,
             )),
       );
+      $("[data-engine-plan]").onclick = (e) =>
+        engineAction(
+          e.currentTarget,
+          "plan",
+          { script: state.scripts[selected], claim: stories[selected].claim },
+          (job) =>
+            showEngineResult(
+              "Storyboard from this draft",
+              job,
+              `<p>${esc(job.result.verification.scope)}</p><p>${job.result.verification.mapped ? "Evidence references mapped." : "Evidence mapping needs review."} Editorial approval remains separate.</p><div class="shot-list engine-scenes">${job.result.scenes.map((s) => `<article><span class="mono">${s.start.toFixed(1)}–${s.end.toFixed(1)}s</span><p>${esc(s.narration)}</p><p class="quiet">${esc(s.visual)}</p></article>`).join("")}</div>`,
+            ),
+        );
       $("[data-review]").onclick = () => {
         view = "review";
         render();

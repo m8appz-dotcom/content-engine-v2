@@ -15,3 +15,9 @@ Corrections during browser review included an editor/navigation overlap in Longf
 Automated checks reject unsigned workspace access, foreign-origin mutations, invalid registration, replayed challenges and unknown credentials. Real holder registration/login/recovery remains pending. Full accessibility certification, physical mobile-device testing, paid/live AI calls, microphone/audio acceptance and finished-video acceptance are not claimed.
 
 Scope limit: No model generation, database integration, rendering or publication is performed.
+
+## Connected engine update
+
+Calls the actual ScriptCandidate/Evidence schemas, claim-reference verifier, production planner and storyboard builder. The current English draft becomes the timed storyboard. This is deterministic planning; it does not make a model call, certify factual accuracy, approve a draft or render a finished video.
+
+Gateway negative tests cover origin, protected actions, session ownership, unsupported input, invalid service credentials, safe errors and path containment. Physical holder passkey acceptance remains pending; it is never inferred from these tests.
