@@ -97,3 +97,7 @@ Gate A approval requires valid script schema, claim-evidence mappings, no unsupp
 Storyboard approval precedes draft rendering. Final export remains blocked in this MVP slice.
 
 QA Gate B reviews the draft artifacts. Publishing requires explicit approval, and final export/publish endpoints remain blocked until their own implementation slice.
+
+## Reviewed delivery
+
+See the [delivery workflow](docs/DELIVERY.md) for acceptance criteria, commit boundaries, identified AI/human review, protected integration, and source provenance.
