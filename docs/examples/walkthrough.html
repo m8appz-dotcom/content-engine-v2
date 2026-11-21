@@ -1,0 +1,14 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Evidence-backed pipeline walkthrough</title><style>body{margin:0;background:#f5f7fa;color:#172033;font:17px/1.6 system-ui,sans-serif}main{max-width:1050px;margin:48px auto;padding:32px}h1{font-size:42px;line-height:1.1;letter-spacing:-1px}h2{margin-top:36px}article,.panel{background:white;border:1px solid #dce2e9;border-radius:12px;padding:22px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.stats{display:flex;gap:44px;flex-wrap:wrap}b{display:block;font-size:30px}.muted{color:#526174}pre{white-space:pre-wrap;font-size:14px}@media(max-width:750px){.grid{grid-template-columns:1fr}}</style><main><p class="muted">Content Engine V2 · Actual offline pipeline output</p><h1>From a source document to reviewable story angles</h1><p>The committed architecture document was passed through the application’s story miner, script writer, schemas, and claim verifier. This deterministic walkthrough makes no live model calls.</p><section class="panel stats"><div><b>3</b>schema-valid candidates</div><div><b>Mapped</b>script claims</div><div><b>Blocked</b>unsupported claim</div></section><h2>Generated candidates</h2><section class="grid"><article><h3>De evidencia real a video publicable</h3><p>Evitar contenido genérico o claims inventados.</p><p class="muted">Evidence mapped · Candidate for human review</p></article><article><h3>Un sistema que no deja pasar claims flojos</h3><p>Mantener credibilidad pública mientras se escala producción de contenido.</p><p class="muted">Evidence mapped · Candidate for human review</p></article><article><h3>Contenido para pymes desde trabajo real, no humo</h3><p>Mostrar capacidades técnicas sin lenguaje interno ni exageración.</p><p class="muted">Evidence mapped · Candidate for human review</p></article></section><h2>Input evidence</h2><section class="panel"><pre># Architecture
+
+Content Engine v2 is a clean-room app. It does not copy Content Engine v1 or Bobi Video App architecture.
+
+Initial vertical slice:
+
+1. Next.js route handlers for MVP API.
+2. SQLite via better-sqlite3 with explicit repository functions.
+3. Server-side job state machine.
+4. Source Registry validation before evidence collection.
+5. Mock provider registry until Tier 0 is proven.
+
+Core invariant: model/provider output must pass schema validation and business validation before DB writes.
+</pre></section><p class="muted">Human editorial approval is still pending. This walkthrough demonstrates contracts and evidence mapping; it does not certify generation quality or publication readiness.</p></main></html>
