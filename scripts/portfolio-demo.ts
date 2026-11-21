@@ -1,0 +1,24 @@
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { generateEvidenceBackedAngles } from '../packages/core/src/artifacts/story-miner';
+import { generateEvidenceBackedScripts } from '../packages/core/src/artifacts/scriptwriter';
+import { verifyScriptClaims } from '../packages/core/src/artifacts/claim-verifier';
+import { EvidenceItemSchema, StoryAngleSchema, ScriptCandidateSchema } from '../packages/core/src/schemas/artifacts';
+
+const output='docs/examples'; mkdirSync(output,{recursive:true});
+const architecture=readFileSync('docs/architecture.md','utf8');
+const evidence=[EvidenceItemSchema.parse({id:'architecture-source',job_id:'portfolio-walkthrough',type:'project_asset',title:'Committed architecture document',description:architecture,path:'docs/architecture.md',source_project_id:'content-engine-v2',rights_status:'owned',privacy_level:'public',public_safe:true,created_at:new Date().toISOString()})];
+const angles=generateEvidenceBackedAngles({job_id:'portfolio-walkthrough',evidence,count:3});
+if(!angles.every(a=>StoryAngleSchema.safeParse(a).success))throw new Error('Invalid story angles');
+const script=generateEvidenceBackedScripts({job_id:'portfolio-walkthrough',angle:angles[0],evidence,count:1,style_profile_id:'portfolio'})[0];
+ScriptCandidateSchema.parse(script);
+const mapped=verifyScriptClaims({script,evidence});
+const unsupported={...script,claims:[...script.claims,{id:'negative-control',script_id:script.id,claim_text:'Unverified business result',claim_type:'factual',support_level:'direct',evidence_ids:[],public_safe:true,requires_human_approval:false,rewrite_suggestion:null}]};
+const blocked=verifyScriptClaims({script:unsupported,evidence});
+if(!mapped.overall_pass||blocked.overall_pass)throw new Error('Claim verification regression');
+const result={mode:'deterministic_offline',source:'docs/architecture.md',sourceText:architecture,angles,script,claimVerification:mapped,unsupportedClaimBlocked:!blocked.overall_pass,humanApproval:'pending',liveProviderCalls:0};
+writeFileSync(`${output}/pipeline-output.json`,JSON.stringify(result,null,2)+'\n');
+const esc=(s:unknown)=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+const cards=angles.map(a=>`<article><h3>${esc(a.title)}</h3><p>${esc(a.goal)}</p><p class="muted">Evidence mapped · Candidate for human review</p></article>`).join('');
+const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Evidence-backed pipeline walkthrough</title><style>body{margin:0;background:#f5f7fa;color:#172033;font:17px/1.6 system-ui,sans-serif}main{max-width:1050px;margin:48px auto;padding:32px}h1{font-size:42px;line-height:1.1;letter-spacing:-1px}h2{margin-top:36px}article,.panel{background:white;border:1px solid #dce2e9;border-radius:12px;padding:22px;margin:16px 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.stats{display:flex;gap:44px;flex-wrap:wrap}b{display:block;font-size:30px}.muted{color:#526174}pre{white-space:pre-wrap;font-size:14px}@media(max-width:750px){.grid{grid-template-columns:1fr}}</style><main><p class="muted">Content Engine V2 · Actual offline pipeline output</p><h1>From a source document to reviewable story angles</h1><p>The committed architecture document was passed through the application’s story miner, script writer, schemas, and claim verifier. This deterministic walkthrough makes no live model calls.</p><section class="panel stats"><div><b>${angles.length}</b>schema-valid candidates</div><div><b>Mapped</b>script claims</div><div><b>Blocked</b>unsupported claim</div></section><h2>Generated candidates</h2><section class="grid">${cards}</section><h2>Input evidence</h2><section class="panel"><pre>${esc(architecture)}</pre></section><p class="muted">Human editorial approval is still pending. This walkthrough demonstrates contracts and evidence mapping; it does not certify generation quality or publication readiness.</p></main></html>`;
+writeFileSync(`${output}/walkthrough.html`,html);
+console.log(JSON.stringify({angles:angles.length,claimsMapped:mapped.overall_pass,unsupportedClaimBlocked:!blocked.overall_pass,liveProviderCalls:0}));

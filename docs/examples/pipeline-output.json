@@ -1,0 +1,290 @@
+{
+  "mode": "deterministic_offline",
+  "source": "docs/architecture.md",
+  "sourceText": "# Architecture\n\nContent Engine v2 is a clean-room app. It does not copy Content Engine v1 or Bobi Video App architecture.\n\nInitial vertical slice:\n\n1. Next.js route handlers for MVP API.\n2. SQLite via better-sqlite3 with explicit repository functions.\n3. Server-side job state machine.\n4. Source Registry validation before evidence collection.\n5. Mock provider registry until Tier 0 is proven.\n\nCore invariant: model/provider output must pass schema validation and business validation before DB writes.\n",
+  "angles": [
+    {
+      "id": "angle_e166b8ef-3025-49be-a15a-b7bb9a0b0ae1",
+      "job_id": "portfolio-walkthrough",
+      "title": "De evidencia real a video publicable",
+      "what_we_did_with_ai_or_tech": "Convertimos evidencia real del proyecto en una historia verificable para pymes.",
+      "goal": "Evitar contenido genérico o claims inventados.",
+      "impressive_method": "Pipeline con Source Registry, evidencia allowlisted y gates de aprobación.",
+      "why_method_is_impressive": "El método reduce el riesgo de publicar afirmaciones sin respaldo porque cada claim debe mapear a evidencia.",
+      "benefits_for_smes": [
+        "Más confianza al publicar contenido técnico",
+        "Menos riesgo de prometer resultados no comprobados",
+        "Proceso repetible para convertir trabajo real en marketing"
+      ],
+      "visual_evidence_ids": [
+        "architecture-source"
+      ],
+      "main_claims": [
+        "El contenido se genera desde evidencia pública segura y allowlisted"
+      ],
+      "hook_potential": "Buen hook si se muestra el antes/después del flujo con pantalla real.",
+      "risk_or_weakness": "Poca variedad visual; puede sentirse repetitivo.",
+      "privacy_risks": [],
+      "score": 90,
+      "status": "candidate",
+      "acceptance_checklist": {
+        "has_ai_or_tech_action": true,
+        "has_goal": true,
+        "has_impressive_method": true,
+        "has_concrete_benefit": true,
+        "has_sme_relevance": true,
+        "has_visual_evidence": true
+      },
+      "source_registry_snapshot_id": null
+    },
+    {
+      "id": "angle_821bee7a-b6af-427d-b6f6-fa78ca8507cd",
+      "job_id": "portfolio-walkthrough",
+      "title": "Un sistema que no deja pasar claims flojos",
+      "what_we_did_with_ai_or_tech": "Construimos una base donde los guiones nacen de evidencia y pasan por validación antes de producir video.",
+      "goal": "Mantener credibilidad pública mientras se escala producción de contenido.",
+      "impressive_method": "Schemas Zod, estados de job y Gate A antes de storyboard/render.",
+      "why_method_is_impressive": "El método es fuerte porque bloquea producción cuando falta evidencia o aprobación.",
+      "benefits_for_smes": [
+        "Más confianza al publicar contenido técnico",
+        "Menos riesgo de prometer resultados no comprobados",
+        "Proceso repetible para convertir trabajo real en marketing"
+      ],
+      "visual_evidence_ids": [
+        "architecture-source"
+      ],
+      "main_claims": [
+        "El contenido se genera desde evidencia pública segura y allowlisted"
+      ],
+      "hook_potential": "Buen hook si se muestra el antes/después del flujo con pantalla real.",
+      "risk_or_weakness": "Poca variedad visual; puede sentirse repetitivo.",
+      "privacy_risks": [],
+      "score": 90,
+      "status": "candidate",
+      "acceptance_checklist": {
+        "has_ai_or_tech_action": true,
+        "has_goal": true,
+        "has_impressive_method": true,
+        "has_concrete_benefit": true,
+        "has_sme_relevance": true,
+        "has_visual_evidence": true
+      },
+      "source_registry_snapshot_id": null
+    },
+    {
+      "id": "angle_bae773ed-cc54-4660-bc08-e31859703b0d",
+      "job_id": "portfolio-walkthrough",
+      "title": "Contenido para pymes desde trabajo real, no humo",
+      "what_we_did_with_ai_or_tech": "Usamos assets y notas reales del trabajo de M8 Apps para encontrar ángulos concretos.",
+      "goal": "Mostrar capacidades técnicas sin lenguaje interno ni exageración.",
+      "impressive_method": "Story Miner limitado por evidencia visual pública y derechos claros.",
+      "why_method_is_impressive": "El método fuerza que la historia se pueda enseñar con prueba visible, no solo con copy.",
+      "benefits_for_smes": [
+        "Más confianza al publicar contenido técnico",
+        "Menos riesgo de prometer resultados no comprobados",
+        "Proceso repetible para convertir trabajo real en marketing"
+      ],
+      "visual_evidence_ids": [
+        "architecture-source"
+      ],
+      "main_claims": [
+        "El contenido se genera desde evidencia pública segura y allowlisted"
+      ],
+      "hook_potential": "Buen hook si se muestra el antes/después del flujo con pantalla real.",
+      "risk_or_weakness": "Poca variedad visual; puede sentirse repetitivo.",
+      "privacy_risks": [],
+      "score": 90,
+      "status": "candidate",
+      "acceptance_checklist": {
+        "has_ai_or_tech_action": true,
+        "has_goal": true,
+        "has_impressive_method": true,
+        "has_concrete_benefit": true,
+        "has_sme_relevance": true,
+        "has_visual_evidence": true
+      },
+      "source_registry_snapshot_id": null
+    }
+  ],
+  "script": {
+    "id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+    "job_id": "portfolio-walkthrough",
+    "angle_id": "angle_e166b8ef-3025-49be-a15a-b7bb9a0b0ae1",
+    "hook": "Antes de creer este video, mira la prueba.",
+    "voiceover": "Antes de creer este video, mira la prueba. Esta captura muestra el trabajo real que sostiene la historia. Aquí está el detalle que convierte el claim en algo verificable. Si saltamos esta parte, el video se vuelve genérico y poco confiable. Ahora la evidencia se transforma en una historia clara para negocio. El video se construye desde pruebas reales y decisión humana. Antes de publicar, aprueba el guion, revisa el storyboard y mira el video final.",
+    "beats": [
+      {
+        "beat_id": "beat_1",
+        "time_start_sec": 0,
+        "time_end_sec": 6,
+        "line": "Antes de creer este video, mira la prueba.",
+        "beat_kind": "hook",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Prueba completa en pantalla desde el primer frame con headline corto.",
+        "audio_intent": "VO enérgica + riser suave de 1s.",
+        "why_it_matters": "Promete prueba inmediata y evita parecer contenido genérico.",
+        "change_from_previous": "Primer impacto visual.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      },
+      {
+        "beat_id": "beat_2",
+        "time_start_sec": 6,
+        "time_end_sec": 12,
+        "line": "Esta captura muestra el trabajo real que sostiene la historia.",
+        "beat_kind": "setup",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Contexto visual mínimo: qué proyecto/evidencia estamos viendo.",
+        "audio_intent": "VO clara, música baja, sin SFX fuerte.",
+        "why_it_matters": "Avanza la historia con una lectura visual nueva.",
+        "change_from_previous": "Cambia de hook a setup: nueva intención visual y sonora.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      },
+      {
+        "beat_id": "beat_3",
+        "time_start_sec": 12,
+        "time_end_sec": 18,
+        "line": "Aquí está el detalle que convierte el claim en algo verificable.",
+        "beat_kind": "proof",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Zoom/crop al detalle verificable que sostiene el claim.",
+        "audio_intent": "SFX sutil de focus/highlight al entrar al detalle.",
+        "why_it_matters": "Avanza la historia con una lectura visual nueva.",
+        "change_from_previous": "Cambia de setup a proof: nueva intención visual y sonora.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      },
+      {
+        "beat_id": "beat_4",
+        "time_start_sec": 18,
+        "time_end_sec": 24,
+        "line": "Si saltamos esta parte, el video se vuelve genérico y poco confiable.",
+        "beat_kind": "tension",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Mostrar el riesgo de hacerlo mal: contenido genérico, claim sin prueba o aprobación faltante.",
+        "audio_intent": "Bajada musical breve para marcar riesgo.",
+        "why_it_matters": "Introduce riesgo humano/editorial para sostener retención.",
+        "change_from_previous": "Cambia de proof a tension: nueva intención visual y sonora.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      },
+      {
+        "beat_id": "beat_5",
+        "time_start_sec": 24,
+        "time_end_sec": 30,
+        "line": "Ahora la evidencia se transforma en una historia clara para negocio.",
+        "beat_kind": "reveal",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Mostrar la transformación: evidencia → historia → criterio humano.",
+        "audio_intent": "Riser corto + hit suave cuando aparece la transformación.",
+        "why_it_matters": "Avanza la historia con una lectura visual nueva.",
+        "change_from_previous": "Cambia de tension a reveal: nueva intención visual y sonora.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      },
+      {
+        "beat_id": "beat_6",
+        "time_start_sec": 30,
+        "time_end_sec": 36,
+        "line": "El video se construye desde pruebas reales y decisión humana.",
+        "beat_kind": "benefit",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Benefit stack visual con prueba al lado, no texto flotante solo.",
+        "audio_intent": "Música recupera energía; VO lista beneficios concretos.",
+        "why_it_matters": "Avanza la historia con una lectura visual nueva.",
+        "change_from_previous": "Cambia de reveal a benefit: nueva intención visual y sonora.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      },
+      {
+        "beat_id": "beat_7",
+        "time_start_sec": 36,
+        "time_end_sec": 42,
+        "line": "Antes de publicar, aprueba el guion, revisa el storyboard y mira el video final.",
+        "beat_kind": "cta",
+        "visual_question": "¿Qué ve el usuario que hace este beat creíble y distinto al anterior?",
+        "suggested_visual": "Cierre con próximo paso y badge de revisión humana pendiente.",
+        "audio_intent": "Hit final suave + VO de acción.",
+        "why_it_matters": "Convierte la historia en una decisión revisable.",
+        "change_from_previous": "Cambia de benefit a cta: nueva intención visual y sonora.",
+        "evidence_ids": [
+          "architecture-source"
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "id": "claim_082df1da-3e25-4ee3-b97a-4f986cea6a8b",
+        "script_id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+        "claim_text": "El contenido se construye desde evidencia real y revisable antes de producirse públicamente",
+        "claim_type": "control",
+        "support_level": "direct",
+        "evidence_ids": [
+          "architecture-source"
+        ],
+        "public_safe": true,
+        "requires_human_approval": false,
+        "rewrite_suggestion": null
+      }
+    ],
+    "cta": "Antes de publicar, aprueba el guion, revisa el storyboard y mira el video final.",
+    "duration_sec": 42,
+    "status": "pending_approval",
+    "creative_direction_id": null,
+    "intended_viewer_read": null,
+    "forbidden_reads": [],
+    "production_readiness": {
+      "retention_beats": [
+        "hook",
+        "setup",
+        "proof",
+        "tension",
+        "reveal",
+        "benefit",
+        "cta"
+      ],
+      "has_visual_contract": true,
+      "has_audio_contract": true,
+      "has_change_per_beat": true,
+      "requires_human_approval": true
+    },
+    "avatar_decision": {
+      "use_avatar": false,
+      "reason": "No avatar requested by Creative Director.",
+      "presenter_role": "none",
+      "asset_required": false
+    },
+    "editorial_criteria": null
+  },
+  "claimVerification": {
+    "script_id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+    "claim_checks": [
+      {
+        "id": "claim_082df1da-3e25-4ee3-b97a-4f986cea6a8b",
+        "script_id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+        "claim_text": "El contenido se construye desde evidencia real y revisable antes de producirse públicamente",
+        "claim_type": "control",
+        "support_level": "direct",
+        "evidence_ids": [
+          "architecture-source"
+        ],
+        "public_safe": true,
+        "requires_human_approval": false,
+        "rewrite_suggestion": null,
+        "reason": "Claim has mapped evidence.",
+        "valid": true
+      }
+    ],
+    "overall_pass": true
+  },
+  "unsupportedClaimBlocked": true,
+  "humanApproval": "pending",
+  "liveProviderCalls": 0
+}

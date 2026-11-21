@@ -22,7 +22,8 @@
     "eval:qa": "tsx scripts/eval-qa.ts",
     "eval": "tsx evals/run-evals.ts",
     "smoke:codex": "tsx scripts/codex-structured-smoke.ts",
-    "ci": "npm run typecheck && npm test && npm run migrate && npm run smoke && npm run eval && npm run build && npm audit --audit-level=low"
+    "ci": "npm run typecheck && npm test && npm run migrate && npm run smoke && npm run eval && npm run build && npm audit --audit-level=low",
+    "demo": "tsx scripts/portfolio-demo.ts"
   },
   "dependencies": {
     "@mariozechner/pi-ai": "^0.73.1",

@@ -26,3 +26,17 @@ deploy/env/*.json
 data/staging/
 data/production/
 data/ci/
+
+.venv/
+
+.pytest_cache/
+
+__pycache__/
+
+*.pyc
+
+test-results/
+
+playwright-report/
+
+/evals/reports/current.json
