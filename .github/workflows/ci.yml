@@ -58,8 +58,21 @@ jobs:
       - name: Eval suite
         run: npm run eval
 
+      - name: Reproduce portfolio walkthrough
+        run: npm run demo
+
       - name: Build
         run: npm run build
 
       - name: Dependency audit (all packages)
         run: npm audit --audit-level=low
+
+      - name: Publish current evaluation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: content-engine-evaluation-${{ github.sha }}
+          path: |
+            evals/reports/current.json
+            docs/examples
+          if-no-files-found: error

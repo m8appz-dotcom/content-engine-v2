@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { writeFileSync, readFileSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { z } from 'zod';
@@ -25,7 +26,8 @@ export async function runEvals(options:{renderDraft?:boolean}={}){
   const bad={...scripts[0],claims:[...scripts[0].claims,{id:'bad',script_id:scripts[0].id,claim_text:'Unsupported claim',claim_type:'factual',support_level:'direct',evidence_ids:['missing'],public_safe:true,requires_human_approval:false,rewrite_suggestion:null}]};
   const badCheck=verifyScriptClaims({script:bad,evidence:fixture.evidence});
   results.push(assertEval('claim verifier blocks missing evidence', badCheck.overall_pass===false && badCheck.claim_checks.some((c:any)=>c.support_level==='unsupported'), badCheck));
-  const privacy=privacyScanText('token=sk_test_1234567890abcdef email bad@example.com');
+  const dummyKey = ['sk', 'test', 'fixture'.repeat(4)].join('_');
+  const privacy=privacyScanText(`token=${dummyKey} email bad@example.com`);
   results.push(assertEval('privacy scan finds secret/email patterns', privacy.some(f=>f.type==='api_key') && privacy.some(f=>f.type==='email'), privacy));
   const plan=createProductionPlanArtifact({job_id:fixture.job_id,script:scripts[0],evidence:fixture.evidence});
   const storyboard=createStoryboardArtifact({job_id:fixture.job_id,script:scripts[0],production_plan:plan});
@@ -52,7 +54,7 @@ export async function runEvals(options:{renderDraft?:boolean}={}){
     results.push(assertEval('draft QA contract blocks unusable product voice', blocked.pass===false && blocked.publish_ready===false && blocked.blocking_issues.includes('voiceover_source_missing') && blocked.blocking_issues.includes('product_voiceover_unusable'), {qa:blocked}));
   }
   const pass=results.every(r=>r.pass); const summary={ok:pass,passed:results.filter(r=>r.pass).length,total:results.length,results,created_at:new Date().toISOString()};
-  mkdirSync('evals/reports',{recursive:true}); writeFileSync(path.join('evals/reports','latest.json'),JSON.stringify(summary,null,2));
+  mkdirSync('evals/reports',{recursive:true}); writeFileSync(path.join('evals/reports','current.json'),JSON.stringify(summary,null,2));
   return summary;
 }
-if(import.meta.url===`file://${process.argv[1]}`){ runEvals({renderDraft:process.env.CONTENT_ENGINE_EVAL_RENDER_DRAFT==='1'}).then(s=>{ console.log(JSON.stringify(s,null,2)); if(!s.ok) process.exit(1); }).catch(e=>{ console.error(e); process.exit(1); }); }
+if(process.argv[1] && import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){ runEvals({renderDraft:process.env.CONTENT_ENGINE_EVAL_RENDER_DRAFT==='1'}).then(s=>{ console.log(JSON.stringify(s,null,2)); if(!s.ok) process.exit(1); }).catch(e=>{ console.error(e); process.exit(1); }); }
