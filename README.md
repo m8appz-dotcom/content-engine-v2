@@ -1,33 +1,63 @@
-# Content Engine v2
+# Content Engine V2
 
-Evidence-first short-form content engine for M8 Apps.
+Evidence-backed content production with structured AI outputs, explicit review gates, and an auditable job state machine.
 
-Core chain:
+The engine turns approved evidence into story angles, scripts, storyboards, and draft artifacts. Every public claim needs an evidence mapping; a human must approve the script and storyboard before the job advances.
 
-```txt
-evidencia real → ángulos fuertes → guiones verificables → aprobación humana → storyboard → draft → QA
+## Architecture
+
+```mermaid
+flowchart LR
+    A[Source registry and evidence] --> B[Story angles and scripts]
+    B --> C[Claim validation]
+    C --> D[Human approval]
+    D --> E[Storyboard and draft]
+    E --> F[QA and audit log]
 ```
 
-## MVP guardrails
+| Layer | Implementation |
+| --- | --- |
+| Application and API | Next.js route handlers in `apps/web` |
+| Contracts and state | TypeScript, Zod schemas, job transitions, and evidence validation in `packages/core` |
+| Storage | SQLite through explicit repository functions |
+| AI integration | Provider adapters and crew orchestration in `packages/providers` and `services/crew` |
+| Drafts and quality | Remotion-based rendering in `packages/video`; review logic in `packages/qa` |
+| Evaluation | Golden fixtures and assertions in `evals` |
 
-- No v1/Bobi architecture or workflow copying.
-- No public claims without evidence mapping.
-- No final/export/publish without explicit approval and QA pass.
-- No Tier 2/3 providers before Tier 0/1 is proven.
+Provider output must pass schema and business validation before database writes. See [architecture](docs/architecture.md), [provider contracts](docs/provider-contracts.md), and the [QA rubric](docs/qa-rubric.md).
 
-## Commands
+## Review the engineering
+
+- [Artifact schemas](packages/core/src/schemas/artifacts.ts): contracts between generation, review, and persistence.
+- [Source registry validation](packages/core/src/source-registry/validator.ts): admissible evidence before collection.
+- [Crew orchestrator](packages/providers/src/ai/crew-orchestrator.ts): provider integration and structured generation.
+- [Evaluation runner](evals/run-evals.ts): evidence mappings, unsupported-claim rejection, privacy checks, and draft QA.
+- [Provider security regression tests](packages/providers/tests/proxy-agent-security.test.ts).
+
+## Reproduce checks in an isolated clone
+
+The [CI workflow](.github/workflows/ci.yml) defines the complete verification environment: Node.js 24, FFmpeg, a renderer browser, isolated SQLite/output paths, and deterministic fallback mode.
+
+Start with dependency installation and static checks:
 
 ```bash
-npm install
+npm ci
 npm run typecheck
-npm test
-npm run migrate
-npm run smoke
-npm run build
 ```
 
+The remaining commands are `npm test`, `npm run migrate`, `npm run smoke`, `npm run eval`, and `npm run build`. Use the CI environment settings when reproducing the full sequence. Migration and smoke commands write to the configured database and output paths; use a disposable local directory.
 
-## Current implemented API surface
+For application development, review [.env.example](.env.example) before running `npm run dev`. Configure your own providers through the environment.
+
+## Evidence and current scope
+
+The committed [evaluation report](evals/reports/latest.json) is a historical artifact dated June 2, 2026: five of six checks passed, while draft QA rejected unusable voiceover. Its filename does not establish the result of the current code; rerun the evaluation to obtain current evidence.
+
+Deterministic checks exercise contracts and gates. They do not measure real-provider generation quality, latency, or cost. A recorded end-to-end provider run remains needed for those claims.
+
+Draft output in this MVP includes structured preview, contact-sheet, and timeline JSON under `outputs/drafts/{job_id}`. Final export and publishing endpoints remain blocked. Passing QA alone does not publish content.
+
+## API and approval gates
 
 - `GET /api/health`
 - `GET /api/providers/status`
@@ -50,7 +80,7 @@ npm run build
 
 Story angles require at least one public-safe visual evidence item with owned/licensed/generated/authorized rights.
 
-Gate A approval requires valid script schema, claim-evidence mappings, no unsupported claims, no prohibited public language, and explicit owner understanding of the angle/benefit.
+Gate A approval requires valid script schema, claim-evidence mappings, no unsupported claims, no prohibited public language, and explicit reviewer understanding of the angle/benefit.
 
 Storyboard preview is evidence-first and preview-only; final render/export remains blocked until later QA slices.
 
