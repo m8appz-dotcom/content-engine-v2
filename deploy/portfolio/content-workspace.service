@@ -1,0 +1,26 @@
+[Unit]
+Description=Isolated Content portfolio workspace
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/apps/portfolio-content/current
+EnvironmentFile=%h/.config/portfolio-content/runtime.env
+ExecStart=/usr/bin/node demo/hosted-server.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+KillMode=control-group
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/portfolio-content
+MemoryMax=768M
+CPUQuota=100%
+TasksMax=64
+
+[Install]
+WantedBy=default.target
