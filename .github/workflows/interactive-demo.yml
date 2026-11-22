@@ -18,7 +18,11 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-          cache-dependency-path: demo/package-lock.json
+          cache-dependency-path: |
+            package-lock.json
+            demo/package-lock.json
+      - name: Install native planner test runtime without lifecycle scripts
+        run: npm ci --ignore-scripts
       - name: Install isolated demo dependencies
         run: npm ci --prefix demo --ignore-scripts
       - name: Check the isolated demo
