@@ -4,15 +4,15 @@ Evidence-backed content production with structured AI outputs, explicit review g
 
 The engine turns approved evidence into story angles, scripts, storyboards, and draft artifacts. Every public claim needs an evidence mapping; a human must approve the script and storyboard before the job advances.
 
-## Interactive English demo
+## See the workspace
 
-[Run the interactive demo](demo/README.md) to explore the approved product interface, local example workflows and downloadable outputs. The isolated demo uses English throughout and preserves the original application below. See its README for the exact example boundaries and passkey acceptance status.
+An editorial workspace for comparing script claims with their evidence.
 
-## Demonstration
+![The current Content Engine V2 workspace](docs/images/workspace-desktop.jpg)
 
-![Application output from the documented walkthrough](docs/images/demo.png)
+[Run locally](demo/README.md) · [Desktop and phone views](docs/PRODUCT.md) · [Engineering case](docs/CASE-STUDY.md) · [Watch the workspace recording](https://raw.githubusercontent.com/m8appz-dotcom/content-engine-v2/main/docs/examples/workspace-walkthrough.mp4)
 
-See the [reproducible walkthrough and its validation scope](docs/DEMO.md).
+The recording shows the authored example workflow. Engine evidence and its validation limits are documented separately in the case.
 
 ## Project direction and use
 
@@ -73,6 +73,9 @@ Deterministic checks exercise contracts and gates. They do not measure real-prov
 
 The draft renderer produces an H.264 MP4 and timeline JSON under `outputs/drafts/{job_id}/{script_id}`, plus a PNG contact sheet under `outputs/contact-sheets/{job_id}/{script_id}`. CI exercises this real renderer. Final export and publishing endpoints remain blocked. Passing QA alone does not publish content.
 
+<details>
+<summary>API and approval gates</summary>
+
 ## API and approval gates
 
 - `GET /api/health`
@@ -101,6 +104,8 @@ Gate A approval requires valid script schema, claim-evidence mappings, no unsupp
 Storyboard approval precedes draft rendering. Final export remains blocked in this MVP slice.
 
 QA Gate B reviews the draft artifacts. Publishing requires explicit approval, and final export/publish endpoints remain blocked until their own implementation slice.
+
+</details>
 
 ## Reviewed delivery
 
