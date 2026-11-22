@@ -30,7 +30,7 @@ export const copy = {
   "approveStoryboard": "Approve storyboard",
   "renderVideo": "Render portrait video",
   "videoTitle": "Portrait video",
-  "videoEmpty": "No video rendered yet. Approve the storyboard, then render the narrated portrait cut.",
+  "videoEmpty": "No video rendered yet. Approve the storyboard, then render the portrait video.",
   "openVideo": "Open video",
   "checkVideo": "Check rendered video",
   "checksTitle": "Video checks",
