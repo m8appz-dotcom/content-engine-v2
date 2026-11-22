@@ -52,7 +52,9 @@ export function createProductionPlanArtifact(input:{job_id:string;script:any;evi
   const referencedEvidenceIds=new Set<string>();
   for(const beat of script.beats ?? []) for(const id of beat.evidence_ids ?? []) referencedEvidenceIds.add(id);
   for(const claim of script.claims ?? []) for(const id of claim.evidence_ids ?? []) referencedEvidenceIds.add(id);
-  const evidence=input.evidence.filter(e=>referencedEvidenceIds.has(e.id));
+  const isSupportingVisual=(e:any)=>e.public_safe && ['owned','licensed','generated','authorized'].includes(e.rights_status) && e.privacy_level==='public' && /\.(png|jpe?g|webp|svg)$/i.test(e.path??'');
+  const evidence=input.evidence.filter(e=>referencedEvidenceIds.has(e.id)||isSupportingVisual(e));
+  const supportingVisual=evidence.find(isSupportingVisual);
   if(evidence.length===0) throw Object.assign(new Error('Approved script has no referenced evidence for production plan'),{code:'business_validation_failed'});
   const unsafe=evidence.filter(e=>!['owned','licensed','generated','authorized'].includes(e.rights_status) || e.privacy_level==='restricted');
   if(unsafe.length) throw Object.assign(new Error('Production plan blocked by unsafe evidence rights/privacy'),{code:'business_validation_failed',details:{unsafe:unsafe.map(e=>e.id)}});
@@ -75,7 +77,7 @@ export function createProductionPlanArtifact(input:{job_id:string;script:any;evi
       time_end_sec:beat.time_end_sec,
       voiceover_line:beat.line,
       visual_goal:beat.suggested_visual,
-      evidence_ids:beat.evidence_ids ?? [],
+      evidence_ids:Array.from(new Set([...(beat.evidence_ids??[]),...(supportingVisual?[supportingVisual.id]:[])])),
       asset_strategy:'use_real_evidence_first_plus_required_secondary_visual',
       primary_visual,
       secondary_visual_or_broll,

@@ -1,3 +1,4 @@
+import {createSparkNarration} from '../../../providers/src/ai/spark-narration';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -31,11 +32,11 @@ function acceptableVoiceoverPath(){
   if(configured && existsSync(configured)) return configured;
   return null;
 }
-function makeAudioTrack(input:{ffmpeg:string;duration:number;dir:string;narration:string;voiceoverRequired:boolean}){
+function makeAudioTrack(input:{ffmpeg:string;duration:number;dir:string;narration:string;voiceoverRequired:boolean;voiceoverPath?:string}){
   const audioDir=path.join(input.dir,'09_voiceover'); mkdirSync(audioDir,{recursive:true});
   const narrationPath=path.join(audioDir,'narration.txt'); const voiceoverPath=path.join(audioDir,'voiceover.wav'); const musicPath=path.join(audioDir,'music_bed.wav'); const sfxPath=path.join(audioDir,'sfx_cues.wav'); const mixPath=path.join(audioDir,'final_mix.wav'); const notesPath=path.join(audioDir,'timing_notes.md');
   writeFileSync(narrationPath,input.narration);
-  const productVoice=acceptableVoiceoverPath();
+  const productVoice=input.voiceoverPath ?? acceptableVoiceoverPath();
   if(productVoice){
     execFileSync(input.ffmpeg,['-y','-i',productVoice,'-ar','48000','-ac','1','-t',String(input.duration),voiceoverPath],{stdio:'ignore'});
   } else {
@@ -108,26 +109,30 @@ export async function createDraftArtifact(input:{job_id:string;script:any;storyb
   const storyboard=input.storyboard.storyboard_json ?? input.storyboard;
   const script=input.script.script_json ?? input.script;
   const presenterPlan=ensurePresenterPlan(storyboard);
-  const basePreviewAssets=(storyboard.preview_assets??[]).filter((a:any)=>a?.path && existsSync(a.path));
+  const basePreviewAssets=(storyboard.preview_assets??[]).filter((a:any)=>a?.path && /\.(png|jpe?g|webp|svg)$/i.test(a.path) && existsSync(a.path));
   const derivedPreviewAssets=(storyboard.derived_visual_assets?.assets ?? storyboard.derived_visual_assets ?? []).map((a:any)=>({evidence_id:a.source_evidence_id,path:a.output_path,type:'derived_broll',rights_status:'generated',scene_id:a.scene_id,derived:true})).filter((a:any)=>a.path && existsSync(a.path));
   const configuredOut=input.outputsPath ?? process.env.OUTPUTS_PATH ?? path.join(/*turbopackIgnore: true*/ process.cwd(),'outputs');
   const outRoot=path.isAbsolute(configuredOut)?configuredOut:path.join(/*turbopackIgnore: true*/ process.cwd(),configuredOut);
-  const dir=path.join(outRoot,'drafts',input.job_id,script.id);
-  const sheetDir=path.join(outRoot,'contact-sheets',input.job_id,script.id);
+  const draftId=`draft_${randomUUID()}`;
+  const dir=path.join(outRoot,'drafts',input.job_id,script.id,draftId);
+  const sheetDir=path.join(outRoot,'contact-sheets',input.job_id,script.id,draftId);
   mkdirSync(dir,{recursive:true}); mkdirSync(sheetDir,{recursive:true});
+  if((process.env.CONTENT_ORIGINAL_WORKSPACE==='1'||process.env.CONTENT_ENGINE_APP_GENERATION==='provider') && !basePreviewAssets.length && !derivedPreviewAssets.length)throw Object.assign(new Error('Add a readable public source image before rendering.'),{code:'visual_evidence_missing'});
   const nativeAssets=(basePreviewAssets.length===0 && derivedPreviewAssets.length===0 && hasNativeTextLayouts(storyboard))?[nativeTextAsset(dir)]:[];
   const previewAssets=[...derivedPreviewAssets,...basePreviewAssets,...nativeAssets];
   if(previewAssets.length===0) throw Object.assign(new Error('Draft render requires real preview_assets with readable local paths or derived visual assets'),{code:'visual_evidence_missing'});
-  const draftId=`draft_${randomUUID()}`;
   const timelinePath=path.join(dir,`${draftId}-timeline.json`);
   const videoTmpPath=path.join(dir,'draft_visual_silent.mp4');
   const videoPath=path.join(dir,'draft_v1.mp4');
   const contactSheetPath=path.join(sheetDir,'contact_sheet_v1.png');
   const fps=30;
-  const duration=Math.max(20,Math.min(30,Number(storyboard.estimated_duration_sec ?? script.duration_sec ?? 30))); // MVP draft cap keeps Remotion reliable on Spark; long exports belong to final render workers.
+  const narration=cleanNarration(storyboard,script);
+  const generatedVoice=process.env.CONTENT_ENGINE_APP_GENERATION==='provider'?await createSparkNarration(narration,path.join(dir,'approved-narration.wav')):null;
+  const duration=generatedVoice?Math.max(20,Math.ceil(generatedVoice.duration+0.5)):Math.max(20,Math.min(30,Number(storyboard.estimated_duration_sec ?? script.duration_sec ?? 30))); // MVP draft cap keeps Remotion reliable on Spark; long exports belong to final render workers.
   const rawTimelineScenes=(storyboard.timeline??[]).length?storyboard.timeline:[{id:'tl_1',start_sec:0,end_sec:duration,evidence_ids:[previewAssets[0].evidence_id],narration:script.hook}];
-  const rawEnd=Math.max(...rawTimelineScenes.map((scene:any)=>Number(scene.end_sec??duration)),duration);
-  const scale=rawEnd>duration?duration/rawEnd:1;
+  const rawEnd=Math.max(...rawTimelineScenes.map((scene:any)=>Number(scene.end_sec??duration)));
+  if(!Number.isFinite(rawEnd)||rawEnd<=0)throw Object.assign(new Error('The storyboard needs a valid timeline.'),{code:'business_validation_failed'});
+  const scale=duration/rawEnd;
   const timelineScenes=rawTimelineScenes.map((scene:any,idx:number)=>({
     ...scene,
     start_sec: idx===0 ? 0 : Number(scene.start_sec??0)*scale,
@@ -139,7 +144,7 @@ export async function createDraftArtifact(input:{job_id:string;script:any;storyb
     const startFrame=Math.round(Number(scene.start_sec??0)*fps);
     const nextStart=idx<timelineScenes.length-1?Math.round(Number(timelineScenes[idx+1].start_sec)*fps):duration*fps;
     const endFrame=Math.max(startFrame+fps*2,Math.min(duration*fps,Math.round(Number(scene.end_sec??duration)*fps),nextStart || duration*fps));
-    return {id:String(scene.id??`scene_${idx+1}`),startFrame,durationFrames:Math.max(fps*2,endFrame-startFrame),caption:firstSentence(scene.shot_recipe?.foreground_text ?? scene.foreground_text ?? scene.narration ?? storyboard.captions?.[idx]?.text ?? script.beats?.[idx]?.line ?? script.hook),intent:scene.shot_recipe?.viewer_read ?? sceneIntent(idx,scene),assetPath:dataUrlForAsset(asset.path),movement:movementForTemplate(scene.scene_template,idx) as DraftScene['movement'],sceneTemplate:scene.scene_template ?? 'ProofDrivenScene',beatKind:scene.beat_kind,motionIntent:scene.motion_intent,vfxIntent:scene.vfx_intent,overlayIntent:scene.shot_recipe?.foreground_text ?? scene.foreground_text ?? scene.overlay_intent,focalPoint:scene.shot_recipe?.focal_area ?? scene.focal_point,humanSceneTitle:scene.shot_recipe?.human_scene_title ?? scene.human_scene_title,foregroundText:scene.shot_recipe?.foreground_text ?? scene.foreground_text,evidenceTreatment:scene.shot_recipe?.evidence_treatment ?? scene.evidence_treatment,layoutTreatment:scene.shot_recipe?.layout_treatment ?? scene.layout_treatment};
+    return {scriptApproved:(input.script.status??script.status)==='approved',storyboardApproved:(input.storyboard.status??storyboard.status)==='approved',id:String(scene.id??`scene_${idx+1}`),startFrame,durationFrames:Math.max(fps*2,endFrame-startFrame),caption:firstSentence(scene.shot_recipe?.foreground_text ?? scene.foreground_text ?? scene.narration ?? storyboard.captions?.[idx]?.text ?? script.beats?.[idx]?.line ?? script.hook),intent:scene.shot_recipe?.viewer_read ?? sceneIntent(idx,scene),assetPath:dataUrlForAsset(asset.path),movement:movementForTemplate(scene.scene_template,idx) as DraftScene['movement'],sceneTemplate:scene.scene_template ?? 'ProofDrivenScene',beatKind:scene.beat_kind,motionIntent:scene.motion_intent,vfxIntent:scene.vfx_intent,overlayIntent:scene.shot_recipe?.foreground_text ?? scene.foreground_text ?? scene.overlay_intent,focalPoint:scene.shot_recipe?.focal_area ?? scene.focal_point,humanSceneTitle:scene.shot_recipe?.human_scene_title ?? scene.human_scene_title,foregroundText:scene.shot_recipe?.foreground_text ?? scene.foreground_text,evidenceTreatment:scene.shot_recipe?.evidence_treatment ?? scene.evidence_treatment,layoutTreatment:scene.shot_recipe?.layout_treatment ?? scene.layout_treatment};
   });
   const inputProps:DraftVideoProps & {durationInFrames:number;fps:number}={title:script.hook ?? 'Content Engine v2 draft',scenes:remotionScenes,brand:{accent:'#66e3a2',background:'#07070a'},durationInFrames:duration*fps,fps};
   const timeline={draft_id:draftId,job_id:input.job_id,script_id:script.id,storyboard_id:storyboard.id,estimated_duration_sec:duration,timeline:timelineScenes,captions:storyboard.captions,preview_assets:storyboard.preview_assets,render_type:'remotion_native_layout_v1_asset_backed_draft_mp4',scene_library_version:'v1',native_layout_version:'layout_treatment_v1',render_note:'Remotion composition uses real preview_assets as the visible primary video evidence; ffmpeg is only used for contact sheet/post-processing.',remotion_scenes:remotionScenes,scene_templates_used:Array.from(new Set(remotionScenes.map(s=>s.sceneTemplate)))};
@@ -152,11 +157,10 @@ export async function createDraftArtifact(input:{job_id:string;script:any;storyb
   const compositions=await getCompositions(serveUrl,{inputProps});
   const composition=compositions.find((c:any)=>c.id==='ContentEngineDraft');
   if(!composition) throw Object.assign(new Error('Remotion composition ContentEngineDraft not found'),{code:'render_failed'});
-  await renderMedia({serveUrl,composition,codec:'h264',audioCodec:'aac',outputLocation:videoTmpPath,inputProps,overwrite:true,chromiumOptions:{disableWebSecurity:true},timeoutInMilliseconds:120000,concurrency:1,disallowParallelEncoding:true});
+  await renderMedia({serveUrl,composition,codec:'h264',audioCodec:'aac',outputLocation:videoTmpPath,inputProps,overwrite:true,timeoutInMilliseconds:120000,concurrency:1,disallowParallelEncoding:true});
   const ffmpeg=ensureFfmpeg();
-  const narration=cleanNarration(storyboard,script);
   const voiceoverRequired=Boolean(narration && narration.length>0);
-  const audio=makeAudioTrack({ffmpeg,duration,dir,narration,voiceoverRequired});
+  const audio=makeAudioTrack({ffmpeg,duration,dir,narration,voiceoverRequired,voiceoverPath:generatedVoice?.path});
   execFileSync(ffmpeg,['-y','-i',videoTmpPath,'-i',audio.mixPath,'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','160k','-shortest',videoPath],{stdio:'ignore'});
   const audioMetrics=verifyAudible(ffmpeg,videoPath);
   makeBeatContactSheet({ffmpeg,videoPath,contactSheetPath,timelineScenes,duration,fps});

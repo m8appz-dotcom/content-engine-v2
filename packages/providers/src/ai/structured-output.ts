@@ -15,6 +15,13 @@ export function resolveStructuredModelConfig():StructuredModelConfig|null{
   const mode=process.env.CONTENT_ENGINE_AI_MODE ?? 'codex_oauth';
   const timeoutMs=Number(process.env.CONTENT_ENGINE_AI_TIMEOUT_MS ?? 120000);
   if(mode==='codex_oauth') return {provider:'codex-oauth',model:normalizeCodexModel(DEFAULT_GPT55_MODEL),timeoutMs,credentialsPath:process.env.CONTENT_ENGINE_CODEX_OAUTH_CREDENTIALS_PATH,credentialsProfile:process.env.CONTENT_ENGINE_CODEX_OAUTH_PROFILE,accessToken:process.env.CONTENT_ENGINE_CODEX_OAUTH_ACCESS_TOKEN,refreshToken:process.env.CONTENT_ENGINE_CODEX_OAUTH_REFRESH_TOKEN,expiresAt:process.env.CONTENT_ENGINE_CODEX_OAUTH_EXPIRES_AT?Number(process.env.CONTENT_ENGINE_CODEX_OAUTH_EXPIRES_AT):undefined};
+  if(mode==='spark_private'){
+    const url=process.env.SPARK_LLM_URL,model=process.env.SPARK_LLM_MODEL;
+    if(!url || !model)return null;
+    const parsed=new URL(url);
+    if(parsed.username || parsed.password || parsed.search || parsed.hash || !['http:','https:'].includes(parsed.protocol))throw Error('Invalid private model endpoint');
+    return {provider:'openai',model,apiKey:process.env.SPARK_LLM_TOKEN||'',baseUrl:url.replace(/\/$/,'')+'/v1',timeoutMs:60000};
+  }
   const apiKey=process.env.CONTENT_ENGINE_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY;
   if(apiKey) return {provider:'openai',model:DEFAULT_GPT55_MODEL.replace(/^openai-codex\//,''),apiKey,baseUrl:process.env.OPENAI_BASE_URL ?? 'https://api.openai.com/v1',timeoutMs:Number(process.env.CONTENT_ENGINE_AI_TIMEOUT_MS ?? 60000)};
   return null;
@@ -47,27 +54,10 @@ async function getCodexAccessToken(config:CodexOAuthConfig):Promise<{access:stri
 function zodToResponseFormat(name:string,schema:any){
   return {type:'json_schema',json_schema:{name,strict:true,schema:schemaToJsonSchema(schema)}};
 }
-// Minimal JSON Schema mapper for the zod object/array/string/number/boolean/enums used by CEv2 artifacts.
-export function schemaToJsonSchema(schema:any):any{
-  const def=schema?._def;
-  if(!def) return {};
-  const type=def.typeName ?? def.type;
-  if(type==='ZodObject' || type==='object'){
-    const shape=typeof def.shape==='function'?def.shape():def.shape; const properties:any={}; const required:string[]=[];
-    for(const [key,val] of Object.entries(shape)){ properties[key]=schemaToJsonSchema(val); const inner=(val as any)._def; if(!['ZodOptional','ZodDefault','ZodNullable','optional','default','nullable'].includes(inner?.typeName ?? inner?.type)) required.push(key); }
-    return {type:'object',properties,required,additionalProperties:false};
-  }
-  if(type==='ZodArray' || type==='array') return {type:'array',items:schemaToJsonSchema(def.type ?? def.element)};
-  if(type==='ZodString' || type==='string') return {type:'string'};
-  if(type==='ZodNumber' || type==='number') return {type:'number'};
-  if(type==='ZodBoolean' || type==='boolean') return {type:'boolean'};
-  if(type==='ZodEnum' || type==='enum') return {type:'string',enum:def.values ?? Object.values(def.entries ?? {})};
-  if(type==='ZodLiteral' || type==='literal') return {const:def.value ?? def.values?.[0]};
-  if(type==='ZodNullable' || type==='nullable') return {anyOf:[schemaToJsonSchema(def.innerType),{type:'null'}]};
-  if(type==='ZodOptional' || type==='ZodDefault' || type==='optional' || type==='default') return schemaToJsonSchema(def.innerType);
-  if(type==='ZodEffects' || type==='pipe') return schemaToJsonSchema(def.schema ?? def.in ?? def.out);
-  if(type==='ZodRecord' || type==='record') return {type:'object',additionalProperties:true};
-  return {};
+// Zod's maintained converter preserves array item types, integer bounds and
+// nested constraints; the application still validates the returned object.
+export function schemaToJsonSchema(schema:z.ZodType):any{
+  return z.toJSONSchema(schema,{target:'draft-7'});
 }
 function extractJson(text:string):unknown{
   const trimmed=text.trim().replace(/^```(?:json)?\s*/,'').replace(/\s*```$/,'');
@@ -89,7 +79,7 @@ export async function generateStructuredObject<T>(input:{schema:z.ZodType<T>;sch
   const fetchImpl=input.fetchImpl ?? fetch;
   const controller=new AbortController(); const timeout=setTimeout(()=>controller.abort(),config.timeoutMs ?? 60000);
   try{
-    const res=await fetchImpl(`${config.baseUrl}/chat/completions`,{method:'POST',headers:{authorization:`Bearer ${config.apiKey}`,'content-type':'application/json'},body:JSON.stringify({model:config.model,messages:[{role:'system',content:input.system},{role:'user',content:input.prompt}],response_format:zodToResponseFormat(input.schemaName,input.schema),temperature:0.2}),signal:controller.signal} as any);
+    const res=await fetchImpl(`${config.baseUrl}/chat/completions`,{method:'POST',headers:{...(config.apiKey?{authorization:`Bearer ${config.apiKey}`}:{ }),'content-type':'application/json'},body:JSON.stringify({model:config.model,messages:[{role:'system',content:input.system},{role:'user',content:input.prompt}],response_format:zodToResponseFormat(input.schemaName,input.schema),temperature:0.2}),signal:controller.signal} as any);
     if(!res.ok) throw Object.assign(new Error(`Structured model request failed: ${res.status}`),{code:'provider_failed',status:res.status,body:await res.text().catch(()=>null)});
     const raw=await res.json(); const content=raw?.choices?.[0]?.message?.content; const parsed=input.schema.parse(JSON.parse(content)); return {object:parsed,model:config.model,raw};
   }finally{ clearTimeout(timeout); }

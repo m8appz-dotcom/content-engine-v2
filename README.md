@@ -6,13 +6,13 @@ The engine turns approved evidence into story angles, scripts, storyboards, and 
 
 ## See the workspace
 
-An editorial workspace for comparing script claims with their evidence.
+The original Next.js production workspace: real project sources, AI-assisted angles and scripts, explicit human review, storyboards and rendered video playback.
 
-![The current Content Engine V2 workspace](docs/images/workspace-desktop.jpg)
+![Earlier authored example workspace](docs/images/workspace-desktop.jpg)
 
-[Open the HTTPS workspace](https://content.kennethyepez.com) · [Run locally](demo/README.md) · [Desktop and phone views](docs/PRODUCT.md) · [Engineering case](docs/CASE-STUDY.md) · [Watch the workspace recording](https://raw.githubusercontent.com/m8appz-dotcom/content-engine-v2/main/docs/examples/workspace-walkthrough.mp4)
+[Open the production workspace](https://content.kennethyepez.com/app) · [Run locally](demo/README.md) · [Desktop and phone views](docs/PRODUCT.md) · [Engineering case](docs/CASE-STUDY.md) · [Watch the workspace recording](https://raw.githubusercontent.com/m8appz-dotcom/content-engine-v2/main/docs/examples/workspace-walkthrough.mp4)
 
-The recording shows the authored example workflow. Engine evidence and its validation limits are documented separately in the case.
+The retained recording and screenshot below document the earlier authored examples, preserved at `/workspace/`. They do not depict the original production app. See [the original app guide](docs/ORIGINAL-APP.md) for the connected workflow and its acceptance status. A schema-valid live model preflight is separate from human approval and final video acceptance.
 
 ## Project direction and use
 

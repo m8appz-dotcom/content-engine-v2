@@ -11,7 +11,7 @@ test('visual treatment turns generic scenes into human shot recipes',()=>{
   ]};
   const treatment=createVisualTreatmentArtifact({job_id:'job_1',script,production_plan:plan,evidence:[{id:'e1',title:'Content Engine dashboard screenshot'}]});
   assert.equal(treatment.scene_shot_recipes.length,3);
-  assert.equal(treatment.scene_shot_recipes[0].foreground_text,'Prueba real');
+  assert.equal(treatment.scene_shot_recipes[0].foreground_text,'Real evidence');
   assert.ok(!JSON.stringify(treatment).includes('HookScene'));
   assert.ok(treatment.scene_shot_recipes.every((r:any)=>r.foreground_text.split(' ').length<=6));
   assert.equal(treatment.scene_shot_recipes[1].evidence_treatment,'context_crop');

@@ -1,0 +1,14 @@
+'use client';
+import {useEffect,useState,type ReactNode} from 'react';
+import {startRegistration,startAuthentication} from '@simplewebauthn/browser';
+export default function WorkspaceAccess({children}:{children:ReactNode}){
+  const hosted=process.env.NEXT_PUBLIC_CONTENT_WORKSPACE==='1';
+  const [status,setStatus]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[invite,setInvite]=useState('');
+  async function load(){const r=await fetch('/auth/status',{cache:'no-store'});if(!r.ok)throw Error('Access is temporarily unavailable. Please try again.');setStatus(await r.json());}
+  useEffect(()=>{if(hosted)load().catch(e=>setError(e.message));},[hosted]);
+  async function request(route:string,body:unknown={}){const r=await fetch('/auth/'+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(typeof data.error==='string'?data.error:'Passkey access could not finish. Try again.');return data;}
+  async function access(kind:'register'|'login'){setBusy(true);setError('');try{const options=await request(kind+'/options',kind==='register'?{invite}:{});const response=kind==='register'?await startRegistration({optionsJSON:options}):await startAuthentication({optionsJSON:options});await request(kind+'/verify',response);setInvite('');await load();}catch{setError('Passkey access was cancelled or could not finish. Your saved projects are safe.');}finally{setBusy(false);}}
+  if(!hosted)return children;
+  if(!status?.signedIn)return <section className="card accessPanel"><div><p className="eyebrow">Your production workspace</p><h2>Make the work worth showing.</h2><p className="muted">Start with a real source. Review the story, approve the storyboard, then watch the rendered draft.</p><p>Your projects stay private to your passkey account.</p></div><div className="accessActions"><button className="btn primary" disabled={busy||!status} onClick={()=>access('login')}>Sign in with a passkey</button>{status?.registrationOpen&&<>{status.invitationRequired&&<label>Invitation code<input value={invite} onChange={e=>setInvite(e.target.value)} autoComplete="off" maxLength={200}/></label>}<button className="btn" disabled={busy||(status.invitationRequired&&!invite.trim())} onClick={()=>access('register')}>Create workspace</button></>}<p role="status">{error||(!status?'Checking access…':'Use your existing passkey to continue.')}</p></div></section>;
+  return <><div className="sessionBar"><span>Private workspace · Passkey verified</span><button className="miniBtn" disabled={busy} onClick={async()=>{setBusy(true);try{await request('logout');await load();}catch{setError('Sign-out could not finish. Try again.');}finally{setBusy(false);}}}>Sign out</button></div>{error&&<p role="alert">{error}</p>}{children}</>;
+}
