@@ -1,4 +1,4 @@
 import PipelineConsole from './components/PipelineConsole';
 import WorkspaceAccess from './components/WorkspaceAccess';
 export const dynamic='force-dynamic';
-export default function Page(){return <main className="shell"><header className="hero"><div><div className="brand"><span className="material-symbols-outlined">movie_edit</span><span>Content Engine</span><span className="pill">Production workspace</span></div><h1>Show the work.<br/>Back the story.</h1><p className="muted">Turn a real project source into a short video. Shape the angle, check every claim, and review the storyboard before rendering.</p></div><div className="heroCard"><span className="material-symbols-outlined">fact_check</span><b>Evidence before production.</b><p>Sources stay linked to the story. Your approval moves it forward.</p></div></header><WorkspaceAccess><PipelineConsole/></WorkspaceAccess></main>;}
+export default function Page(){return <WorkspaceAccess><PipelineConsole/></WorkspaceAccess>;}

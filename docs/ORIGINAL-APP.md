@@ -1,6 +1,6 @@
 # Original production app
 
-The primary workspace uses the repository's original Next.js application and production packages. The earlier authored example interface remains available under `/workspace/`, with its existing saved copies and WebAuthn account store retained.
+The primary workspace connects the repository's Next.js application and production packages to the selected editorial design: a serif project rail, paper background and side-by-side source and script columns. Sources include an accessible process illustration and a protected original application capture. The earlier authored example interface remains available under `/workspace/`, with its existing saved copies and WebAuthn account store retained.
 
 ## Try the workflow
 

@@ -1,4 +1,4 @@
-import './globals.css';
+import './editorial.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: 'Content Engine v2', description: 'Evidence-first short-form content engine for M8 Apps' };
