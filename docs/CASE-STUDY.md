@@ -1,8 +1,8 @@
-# From a source document to a reviewable storyboard
+# From project evidence to a reviewable video
 
 A fluent script can make a claim its source does not support. Content Engine separates a candidate script, its evidence references and the decision to approve a revision. Editing a reviewed script invalidates that revision's approval.
 
-[Current screens](PRODUCT.md) · [Workspace recording](examples/workspace-walkthrough.mp4) · [Native output](examples/pipeline-output.json)
+[Open the original app](https://content.kennethyepez.com/app) · [Production workflow](ORIGINAL-APP.md) · [Earlier example screens](PRODUCT.md) · [Offline contract output](examples/pipeline-output.json)
 
 ## Responsibility and decisions
 
@@ -13,7 +13,9 @@ Kenneth Yepez directs product requirements, architecture, integration and accept
 | Validate structured output before persistence | Invalid artifacts stop at a contract boundary; schemas require maintenance. |
 | Separate evidence mapping from editorial truth | A reference makes a claim inspectable; a valid evidence ID cannot establish its truth. |
 | Bind approval to a script revision | An edit needs a new decision; reviewers repeat approval after a material change. |
-| Isolate demonstration state | Planning can run without opening a production database; this does not prove deployment. |
+| Isolate projects by authenticated account | Each account has private storage and protected media; production databases are not demonstration inputs. |
+| Preserve the original application | Its Next.js routes, state machine and renderer remain the product; the earlier authored example stays available separately. |
+| Render from the approved revision | The storyboard and video use the approved script; prior draft artifacts remain available. |
 
 ## Inspect an actual result
 
@@ -26,7 +28,7 @@ npm run demo
 
 This offline run makes zero live provider calls. It demonstrates contracts and evidence references. It does not measure model quality, provider latency, savings or completed video production.
 
-The screen recording shows the English authored-example workflow, with idle waits shortened and no narration. It does not simulate human approval or a live response. [Engine setup](../demo/ENGINES.md) explains the connected native planner.
+The retained [screen recording](examples/workspace-walkthrough.mp4) shows the earlier English authored-example workflow, with idle waits shortened and no narration. It does not record the current original app, a live provider response or completed human authentication.
 
 ## Delivery and remaining acceptance
 
@@ -34,4 +36,6 @@ The screen recording shows the English authored-example workflow, with idle wait
 
 The isolated [HTTPS workspace](https://content.kennethyepez.com) is deployed with exact-domain passkeys and private durable state. [Hosting PR](https://github.com/m8appz-dotcom/content-engine-v2/pull/8) records the implementation, CI and automated code/security review. The browser verifies that anonymous engine execution opens the passkey flow; it does not bypass it. The deployed native planner completed a private machine-identity check with three scenes and zero provider calls. Existing Spark production services and data remain separate.
 
-A current-revision real-provider run with reviewed outputs is still needed to establish generation quality. Holder registration, sign-in and second-passkey recovery remain physical acceptance steps. A machine service identity does not complete those steps. No customer outcome or migration of an active production service is claimed.
+The [original-app integration](https://github.com/m8appz-dotcom/content-engine-v2/pull/11) connects real model generation, English narration, the native renderer and protected MP4 playback. An isolated component run produced a schema-valid angle and script and a 26-second narrated video using public project sources. This component run did not create human approvals and is separate from browser acceptance.
+
+The original app is deployed with the existing account and passkey store retained. The holder's existing sign-in, review of a concrete script and storyboard, and final rendered playback remain the acceptance steps. No additional authenticator is required to demonstrate the product. No customer outcome or migration of an unrelated active service is claimed.

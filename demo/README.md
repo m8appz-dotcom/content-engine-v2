@@ -1,5 +1,7 @@
 # Content Engine v2 — interactive English demo
 
+This guide covers the earlier authored-example interface, retained at `/workspace/` on the hosted service. For the current original Next.js app and its connected production workflow, use the [original app guide](../docs/ORIGINAL-APP.md).
+
 Choose one of three English story examples. Edit its script, compare a claim with the source, and approve the current revision. Export the approved storyboard. Editing the script resets approval.
 
 See [ENGINES.md](ENGINES.md) for the actual engine connection, additional runtime setup, credentials and acceptance limits.
@@ -31,7 +33,7 @@ Guest exploration saves drafts in this browser's local storage. It does not requ
 
 The included server integrates FIDO2/WebAuthn for optional private workspace copies. It stores public credential material and workspace JSON in ignored **.demo-state/workspaces.json**, outside the static directory. It never receives a PIN, fingerprint or private key. Registration and login require user verification; the server validates the RP ID and origin, consumes challenges once, and uses HttpOnly/Secure/SameSite sessions. Add a second passkey after signing in and keep an exported workspace copy.
 
-**The holder must still complete real registration, sign-in, second-passkey access and recovery acceptance.** Automated negative checks do not substitute for that physical interaction. No existing authentication or production access was removed.
+Real sign-in and authenticator interactions belong to the account holder. Automated negative checks do not substitute for physical acceptance. A second passkey is an optional recovery measure, not a prerequisite for the product walkthrough. No existing authentication or production access was removed.
 
 ## Boundaries
 

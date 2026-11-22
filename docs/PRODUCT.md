@@ -1,19 +1,23 @@
 # Content Engine V2 — product review
 
-An editorial workspace for comparing script claims with their evidence.
+The original Next.js application connects project sources, AI-assisted writing, human review, storyboarding and video playback. [Open the production workspace](https://content.kennethyepez.com/app) · [Follow the workflow](ORIGINAL-APP.md).
+
+## Earlier authored examples
+
+The captures and recording below show the retained authored-example interface at `/workspace/`. They are historical material, not captures of the current original-app workflow.
 
 ## Desktop
 
-![Current desktop workspace](images/workspace-desktop.jpg)
+![Earlier authored desktop workspace](images/workspace-desktop.jpg)
 
 ## Phone
 
-![Current phone workspace at a 390px viewport](images/workspace-mobile.jpg)
+![Earlier authored phone workspace at a 390px viewport](images/workspace-mobile.jpg)
 
 ## Try it
 
-Follow [local setup](../demo/README.md). Guest exploration uses authored examples. The [engine setup](../demo/ENGINES.md) explains which actions use the repository engine and which need private provider configuration. Private workspace access uses the existing passkey flow.
+Follow the [original app guide](ORIGINAL-APP.md) for the current production workflow. The separate [authored-example setup](../demo/README.md) documents the preserved older interface. Access to private projects uses the existing passkey account.
 
-These are original browser captures of the current interface. No image was cropped, resized or regenerated. The CSS maintenance change preserves the selected composition and removes the other products’ styles.
+These are unmodified browser captures of that earlier interface.
 
 [Watch the workspace recording](examples/workspace-walkthrough.mp4). It contains actual browser frames with idle waits shortened and no narration. It demonstrates the authored workflow; it does not record a live provider or a completed human authentication flow.
