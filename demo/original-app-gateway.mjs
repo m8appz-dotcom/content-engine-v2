@@ -67,7 +67,7 @@ export function createOriginalAppGateway({
       if (!session)
         return reply(res, 401, "Sign in with a passkey to open your projects.");
       const safe =
-        /^\/app\/api\/(?:reviewer|jobs(?:\/[a-zA-Z0-9_-]{1,90}(?:\/(?:prepare-example|evidence|story-angles|select-angle|scripts|verify-claims|approve-script|request-script-revision|reject-script|production-plan|storyboard-preview|storyboard|approve-storyboard|request-storyboard-revision|render-draft|drafts(?:\/[a-zA-Z0-9_-]{1,90}(?:\/media)?)?|qa|audit-log|deliverable-contract))?)?)$/.test(
+        /^\/app\/api\/(?:reviewer|jobs(?:\/[a-zA-Z0-9_-]{1,90}(?:\/(?:prepare-example|evidence(?:\/[a-zA-Z0-9_-]{1,90}\/media)?|story-angles|select-angle|scripts|verify-claims|approve-script|request-script-revision|reject-script|production-plan|storyboard-preview|storyboard|approve-storyboard|request-storyboard-revision|render-draft|drafts(?:\/[a-zA-Z0-9_-]{1,90}(?:\/media)?)?|qa|audit-log|deliverable-contract))?)?)$/.test(
           pathname,
         );
       if (!safe || !["GET", "POST"].includes(req.method))
