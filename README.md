@@ -8,11 +8,18 @@ The engine turns approved evidence into story angles, scripts, storyboards, and 
 
 The original Next.js production workspace: real project sources, AI-assisted angles and scripts, explicit human review, storyboards and rendered video playback.
 
+[Open the production workspace](https://content.kennethyepez.com/app) · [Original app guide](docs/ORIGINAL-APP.md) · [Engineering case](docs/CASE-STUDY.md)
+
+The original app requires a passkey account. Its connected workflow uses real public project sources, structured model generation and English narration. The [app guide](docs/ORIGINAL-APP.md) records what has been verified and which human review steps remain.
+
+<details>
+<summary>Earlier authored examples</summary>
+
 ![Earlier authored example workspace](docs/images/workspace-desktop.jpg)
 
-[Open the production workspace](https://content.kennethyepez.com/app) · [Run locally](demo/README.md) · [Desktop and phone views](docs/PRODUCT.md) · [Engineering case](docs/CASE-STUDY.md) · [Watch the workspace recording](https://raw.githubusercontent.com/m8appz-dotcom/content-engine-v2/main/docs/examples/workspace-walkthrough.mp4)
+The [earlier recording](docs/examples/workspace-walkthrough.mp4) and [desktop/phone captures](docs/PRODUCT.md) document the retained authored examples at `/workspace/`. They do not depict the original production app or a completed live-provider journey. [Run those examples locally](demo/README.md).
 
-The retained recording and screenshot below document the earlier authored examples, preserved at `/workspace/`. They do not depict the original production app. See [the original app guide](docs/ORIGINAL-APP.md) for the connected workflow and its acceptance status. A schema-valid live model preflight is separate from human approval and final video acceptance.
+</details>
 
 ## Project direction and use
 
