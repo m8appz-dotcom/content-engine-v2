@@ -4,7 +4,7 @@
   "sourceText": "# Architecture\n\nContent Engine v2 is a clean-room app. It does not copy Content Engine v1 or Bobi Video App architecture.\n\nInitial vertical slice:\n\n1. Next.js route handlers for MVP API.\n2. SQLite via better-sqlite3 with explicit repository functions.\n3. Server-side job state machine.\n4. Source Registry validation before evidence collection.\n5. Mock provider registry until Tier 0 is proven.\n\nCore invariant: model/provider output must pass schema validation and business validation before DB writes.\n",
   "angles": [
     {
-      "id": "angle_e166b8ef-3025-49be-a15a-b7bb9a0b0ae1",
+      "id": "angle_d8126a08-6fe5-4652-97f4-8a1f6a670cce",
       "job_id": "portfolio-walkthrough",
       "title": "De evidencia real a video publicable",
       "what_we_did_with_ai_or_tech": "Convertimos evidencia real del proyecto en una historia verificable para pymes.",
@@ -38,7 +38,7 @@
       "source_registry_snapshot_id": null
     },
     {
-      "id": "angle_821bee7a-b6af-427d-b6f6-fa78ca8507cd",
+      "id": "angle_f21f4dc3-50b8-457d-93b4-fb32b61c75fb",
       "job_id": "portfolio-walkthrough",
       "title": "Un sistema que no deja pasar claims flojos",
       "what_we_did_with_ai_or_tech": "Construimos una base donde los guiones nacen de evidencia y pasan por validación antes de producir video.",
@@ -72,7 +72,7 @@
       "source_registry_snapshot_id": null
     },
     {
-      "id": "angle_bae773ed-cc54-4660-bc08-e31859703b0d",
+      "id": "angle_fc411ded-80c1-4072-bfb1-4e814b4bf00e",
       "job_id": "portfolio-walkthrough",
       "title": "Contenido para pymes desde trabajo real, no humo",
       "what_we_did_with_ai_or_tech": "Usamos assets y notas reales del trabajo de M8 Apps para encontrar ángulos concretos.",
@@ -107,9 +107,9 @@
     }
   ],
   "script": {
-    "id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+    "id": "script_447a8543-e0a9-47f4-9b68-f5a02853a931",
     "job_id": "portfolio-walkthrough",
-    "angle_id": "angle_e166b8ef-3025-49be-a15a-b7bb9a0b0ae1",
+    "angle_id": "angle_d8126a08-6fe5-4652-97f4-8a1f6a670cce",
     "hook": "Antes de creer este video, mira la prueba.",
     "voiceover": "Antes de creer este video, mira la prueba. Esta captura muestra el trabajo real que sostiene la historia. Aquí está el detalle que convierte el claim en algo verificable. Si saltamos esta parte, el video se vuelve genérico y poco confiable. Ahora la evidencia se transforma en una historia clara para negocio. El video se construye desde pruebas reales y decisión humana. Antes de publicar, aprueba el guion, revisa el storyboard y mira el video final.",
     "beats": [
@@ -221,8 +221,8 @@
     ],
     "claims": [
       {
-        "id": "claim_082df1da-3e25-4ee3-b97a-4f986cea6a8b",
-        "script_id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+        "id": "claim_8facb27b-63d0-413d-b31d-1d181d9d3136",
+        "script_id": "script_447a8543-e0a9-47f4-9b68-f5a02853a931",
         "claim_text": "El contenido se construye desde evidencia real y revisable antes de producirse públicamente",
         "claim_type": "control",
         "support_level": "direct",
@@ -264,11 +264,11 @@
     "editorial_criteria": null
   },
   "claimVerification": {
-    "script_id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+    "script_id": "script_447a8543-e0a9-47f4-9b68-f5a02853a931",
     "claim_checks": [
       {
-        "id": "claim_082df1da-3e25-4ee3-b97a-4f986cea6a8b",
-        "script_id": "script_b017d178-f91c-45ad-8ac1-af6be2072c4a",
+        "id": "claim_8facb27b-63d0-413d-b31d-1d181d9d3136",
+        "script_id": "script_447a8543-e0a9-47f4-9b68-f5a02853a931",
         "claim_text": "El contenido se construye desde evidencia real y revisable antes de producirse públicamente",
         "claim_type": "control",
         "support_level": "direct",
