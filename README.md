@@ -4,6 +4,10 @@ Evidence-backed content production with structured AI outputs, explicit review g
 
 The engine turns approved evidence into story angles, scripts, storyboards, and draft artifacts. Every public claim needs an evidence mapping; a human must approve the script and storyboard before the job advances.
 
+## Interactive English demo
+
+[Run the interactive demo](demo/README.md) to explore the approved product interface, local example workflows and downloadable outputs. The isolated demo uses English throughout and preserves the original application below. See its README for the exact example boundaries and passkey acceptance status.
+
 ## Demonstration
 
 ![Application output from the documented walkthrough](docs/images/demo.png)

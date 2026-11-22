@@ -1,0 +1,20 @@
+import {readFileSync} from 'node:fs';
+import {EvidenceItemSchema,ScriptCandidateSchema} from '../packages/core/src/schemas/artifacts';
+import {verifyScriptClaims} from '../packages/core/src/artifacts/claim-verifier';
+import {createProductionPlanArtifact} from '../packages/core/src/artifacts/production-planner';
+import {createStoryboardArtifact} from '../packages/core/src/artifacts/storyboarder';
+let input='';for await(const chunk of process.stdin)input+=chunk;
+const data=JSON.parse(input),job_id='demo-'+data.id,script_id=job_id+'-script';
+const evidence=[EvidenceItemSchema.parse({id:'architecture-source',job_id,type:'project_asset',title:'Committed architecture document',description:readFileSync('docs/architecture.md','utf8'),path:'docs/architecture.md',rights_status:'owned',privacy_level:'public',public_safe:true,created_at:new Date().toISOString()})];
+const sentences=data.script.trim().split(/(?<=[.!?])\s+/).filter(Boolean);
+if(sentences.length<3)throw Error('At least three sentences are required');
+const count=Math.min(7,sentences.length);
+const lines=Array.from({length:count},(_,i)=>sentences.slice(Math.floor(i*sentences.length/count),Math.floor((i+1)*sentences.length/count)).join(' '));
+const duration=42,beats=lines.map((line,i)=>({beat_id:'B'+String(i+1).padStart(2,'0'),time_start_sec:i*duration/lines.length,time_end_sec:(i+1)*duration/lines.length,line,beat_kind:i===0?'hook':i===lines.length-1?'cta':'proof',visual_question:'Which source detail supports this line?',suggested_visual:'Show the committed architecture document.',evidence_ids:['architecture-source']}));
+const script=ScriptCandidateSchema.parse({id:script_id,job_id,angle_id:'architecture-story',hook:lines[0],voiceover:data.script.trim(),beats,claims:[{id:'claim-1',script_id,claim_text:data.claim,claim_type:'control',support_level:'direct',evidence_ids:['architecture-source'],public_safe:true,requires_human_approval:true,rewrite_suggestion:null}],cta:lines.at(-1),duration_sec:duration,status:'draft'});
+const verification=verifyScriptClaims({script,evidence});
+const plan=createProductionPlanArtifact({job_id,script,evidence});
+const board=createStoryboardArtifact({job_id,script,production_plan:plan});
+// Export the actual timeline through an English editorial projection. Native internal helper text is not product copy.
+const scenes=plan.scenes.map((scene:any)=>({id:scene.id,beatId:scene.beat_id,start:scene.time_start_sec,end:scene.time_end_sec,narration:scene.voiceover_line,evidence:scene.evidence_ids,visual:'Show the source detail for this beat.'}));
+console.log(JSON.stringify({language:'en',script,verification:{mapped:verification.overall_pass,claims:verification.claim_checks.length,scope:'Evidence references and schema checks. Editorial truth and final approval require human review.'},scenes,timeline:board.timeline,source:'docs/architecture.md',renderedVideo:false,liveProviderCalls:0}));
