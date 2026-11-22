@@ -1,12 +1,13 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {copy} from './editorial-copy';
+import {readWorkspaceResponse} from './workspace-response';
 import {Wordmark,PipelineImage} from './EditorialElements';
 type Job={id:string;title:string;status:string};
 type Tab='evidence'|'angles'|'scripts'|'storyboard'|'draft'|'qa';
 const base=process.env.NEXT_PUBLIC_CONTENT_BASE_PATH||'';
 const labels:Record<string,string>={created:'Add evidence',evidence_collected:'Evidence ready',angles_generated:'Choose an angle',script_pending_approval:'Review script',script_approved:'Script approved',production_planned:'Plan ready',storyboard_ready:'Review storyboard',draft_rendered:'Draft ready',qa_passed:'Checks passed',qa_failed:'Needs changes',script_needs_revision:'Revise script',script_rejected:'Revise script'};
-async function request(path:string,body?:unknown){const r=await fetch(base+'/api/'+path,{cache:'no-store',...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})});const data=await r.json();if(r.status===401)window.dispatchEvent(new Event('content:session-expired'));if(!r.ok)throw Error(data?.error?.message||'This step could not finish. Try again.');return data;}
+async function request(path:string,body?:unknown){const r=await fetch(base+'/api/'+path,{cache:'no-store',...(body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})});if(r.status===401)window.dispatchEvent(new Event('content:session-expired'));return readWorkspaceResponse(r);}
 export default function PipelineConsole(){
   const [jobs,setJobs]=useState<Job[]>([]),[selected,setSelected]=useState(''),[details,setDetails]=useState<any>({}),[tab,setTab]=useState<Tab>('evidence');
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(''),[failed,setFailed]=useState(false),[actor,setActor]=useState(''),[title,setTitle]=useState('');
