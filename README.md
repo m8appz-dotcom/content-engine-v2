@@ -10,7 +10,7 @@ An editorial workspace for comparing script claims with their evidence.
 
 ![The current Content Engine V2 workspace](docs/images/workspace-desktop.jpg)
 
-[Run locally](demo/README.md) · [Desktop and phone views](docs/PRODUCT.md) · [Engineering case](docs/CASE-STUDY.md) · [Watch the workspace recording](https://raw.githubusercontent.com/m8appz-dotcom/content-engine-v2/main/docs/examples/workspace-walkthrough.mp4)
+[Open the HTTPS workspace](https://content.kennethyepez.com) · [Run locally](demo/README.md) · [Desktop and phone views](docs/PRODUCT.md) · [Engineering case](docs/CASE-STUDY.md) · [Watch the workspace recording](https://raw.githubusercontent.com/m8appz-dotcom/content-engine-v2/main/docs/examples/workspace-walkthrough.mp4)
 
 The recording shows the authored example workflow. Engine evidence and its validation limits are documented separately in the case.
 
