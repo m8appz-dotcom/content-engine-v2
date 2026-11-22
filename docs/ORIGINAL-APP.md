@@ -14,7 +14,7 @@ Approvals belong to the authenticated account. The app does not impersonate a re
 
 ## Isolated hosting
 
-Install both dependency locks, then build from the repository root with `CONTENT_ORIGINAL_WORKSPACE=1 npm run build`. Keep the existing HTTPS origin, RP ID, invitations and private `WORKSPACE_STATE`. Set `CONTENT_ORIGINAL_WORKSPACE=1` in the dedicated runtime environment; the existing `node demo/hosted-server.mjs` entry point selects the original app.
+Install both dependency locks, then build from the repository root with `CONTENT_ORIGINAL_WORKSPACE=1 npm run build`. Keep the existing HTTPS origin, RP ID, invitations and private `WORKSPACE_STATE`. Set `NODE_ENV=production` and `CONTENT_ORIGINAL_WORKSPACE=1` in the dedicated runtime environment; the existing `node demo/hosted-server.mjs` entry point selects the original app. `npm start` also uses the guarded original-app server. A hosted origin refuses development mode.
 
 The gateway and Next handler share one loopback listener. Every original API action requires a real passkey session. Each account has a separate SQLite database and output directory beneath private state; media requests require membership in that account's project and draft. No second unguarded Next server should run beside it.
 

@@ -11,6 +11,12 @@ const origin = process.env.WORKSPACE_ORIGIN,
   port = Number(process.env.PORT);
 const development = process.env.NODE_ENV !== "production";
 if (
+  development &&
+  origin &&
+  !["localhost", "127.0.0.1", "[::1]"].includes(new URL(origin).hostname)
+)
+  throw Error("A hosted origin requires NODE_ENV=production.");
+if (
   !origin ||
   !state ||
   !path.isAbsolute(state) ||
