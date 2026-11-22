@@ -37,7 +37,7 @@ The included server integrates FIDO2/WebAuthn for optional private workspace cop
 
 Storyboard planning and evidence-reference checks run through the repository engine. No model generation, production database write, finished video rendering or publication is performed.
 
-The local server supports its documented localhost origin. This change does not deploy a public service or make these local workspaces production-ready. A public deployment needs a stable HTTPS origin/RP ID, durable protected storage, retention policy and completed holder acceptance. No provider keys or production data are included. No Spark data or services are touched.
+The local launcher supports its documented localhost origin. The separate [hosted entry point](HOSTING.md) requires an exact stable HTTPS origin, private durable state and isolated supervision; it protects all engine actions with passkey access. Holder acceptance remains a separate physical check. No provider keys or production data are included.
 
 ## Verification
 
