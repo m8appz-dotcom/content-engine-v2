@@ -36,8 +36,8 @@ test('draft renderer creates asset-backed Remotion mp4, timeline json, and png c
   assert.equal(draft.notes.voiceover_blocker,'acceptable_voiceover_source_missing');
   assert.ok(draft.notes.voiceover_path);
   assert.ok(existsSync(draft.notes.voiceover_path));
-  assert.ok(existsSync(draft.notes.music_path));
-  assert.ok(existsSync(draft.notes.sfx_path));
+  assert.ok(draft.notes.music_path && existsSync(draft.notes.music_path));
+  assert.ok(draft.notes.sfx_path && existsSync(draft.notes.sfx_path));
   assert.ok(Number(draft.notes.audio_metrics.mean_volume_db)>-45);
   assert.ok(Number(draft.notes.audio_metrics.max_volume_db)>-30);
   assert.equal(draft.notes.placeholder_render,false);

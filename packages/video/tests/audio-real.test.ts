@@ -21,8 +21,8 @@ test('draft renderer refuses bad local robotic VO and muxes non-silent music/SFX
   assert.equal(draft.notes.voiceover_blocker,'acceptable_voiceover_source_missing');
   assert.equal(draft.notes.voiceover_source,null);
   assert.equal(draft.notes.product_voiceover_usable,false);
-  assert.ok(existsSync(draft.notes.music_path));
-  assert.ok(existsSync(draft.notes.sfx_path));
+  assert.ok(draft.notes.music_path && existsSync(draft.notes.music_path));
+  assert.ok(draft.notes.sfx_path && existsSync(draft.notes.sfx_path));
   assert.ok(Number(draft.notes.audio_metrics.mean_volume_db)>-45);
   assert.ok(Number(draft.notes.audio_metrics.max_volume_db)>-30);
   const codec=execFileSync('ffprobe',['-v','error','-select_streams','a:0','-show_entries','stream=codec_name','-of','csv=p=0',draft.video_path],{encoding:'utf8'}).trim();

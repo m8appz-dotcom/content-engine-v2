@@ -32,26 +32,26 @@ function acceptableVoiceoverPath(){
   if(configured && existsSync(configured)) return configured;
   return null;
 }
-function makeAudioTrack(input:{ffmpeg:string;duration:number;dir:string;narration:string;voiceoverRequired:boolean;voiceoverPath?:string}){
+export function makeAudioTrack(input:{ffmpeg:string;duration:number;dir:string;narration:string;voiceoverRequired:boolean;voiceoverPath?:string}){
   const audioDir=path.join(input.dir,'09_voiceover'); mkdirSync(audioDir,{recursive:true});
-  const narrationPath=path.join(audioDir,'narration.txt'); const voiceoverPath=path.join(audioDir,'voiceover.wav'); const musicPath=path.join(audioDir,'music_bed.wav'); const sfxPath=path.join(audioDir,'sfx_cues.wav'); const mixPath=path.join(audioDir,'final_mix.wav'); const notesPath=path.join(audioDir,'timing_notes.md');
+  const narrationPath=path.join(audioDir,'narration.txt'),voiceoverPath=path.join(audioDir,'voiceover.wav'),musicPath=path.join(audioDir,'music_bed.wav'),sfxPath=path.join(audioDir,'sfx_cues.wav'),mixPath=path.join(audioDir,'final_mix.wav'),notesPath=path.join(audioDir,'timing_notes.md');
   writeFileSync(narrationPath,input.narration);
   const productVoice=input.voiceoverPath ?? acceptableVoiceoverPath();
   if(productVoice){
-    execFileSync(input.ffmpeg,['-y','-i',productVoice,'-ar','48000','-ac','1','-t',String(input.duration),voiceoverPath],{stdio:'ignore'});
-  } else {
-    execFileSync(input.ffmpeg,['-y','-f','lavfi','-i',`anullsrc=r=48000:cl=mono:d=${input.duration}`,voiceoverPath],{stdio:'ignore'});
+    const sourceDuration=Number(execFileSync(process.env.FFPROBE_BIN||'ffprobe',['-v','error','-show_entries','format=duration','-of','default=noprint_wrappers=1:nokey=1',productVoice],{encoding:'utf8'}).trim());
+    if(!Number.isFinite(sourceDuration)||sourceDuration<=0||sourceDuration>input.duration+0.005)throw Object.assign(new Error('The full narration must fit the video before mixing.'),{code:'audio_timing_invalid'});
+    execFileSync(input.ffmpeg,['-y','-i',productVoice,'-ar','48000','-ac','1',voiceoverPath],{stdio:'ignore'});
+    execFileSync(input.ffmpeg,['-y','-i',voiceoverPath,'-af',`loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000,apad,atrim=0:${input.duration}`,'-ar','48000','-ac','1','-t',String(input.duration),mixPath],{stdio:'ignore'});
+    writeFileSync(notesPath,`# Narration mix\n\nFull narration retained. Voice only; no generated music or effect cues. Output: 48 kHz mono.\n`);
+    return {audioDir,narrationPath,voiceoverPath,musicPath:null,sfxPath:null,mixPath,notesPath,voiceover_source:'configured-product-voice',product_voiceover_usable:true,voiceover_required:input.voiceoverRequired,voiceover_blocker:null};
   }
+  // Retained offline fixtures have no narration and keep their explicit blocker.
+  execFileSync(input.ffmpeg,['-y','-f','lavfi','-i',`anullsrc=r=48000:cl=mono:d=${input.duration}`,voiceoverPath],{stdio:'ignore'});
   execFileSync(input.ffmpeg,['-y','-f','lavfi','-i',`sine=frequency=196:duration=${input.duration}:sample_rate=48000`,'-af','volume=0.045',musicPath],{stdio:'ignore'});
   execFileSync(input.ffmpeg,['-y','-f','lavfi','-i',`anullsrc=r=48000:cl=mono:d=${input.duration}`,'-f','lavfi','-i','sine=frequency=920:duration=0.07:sample_rate=48000','-filter_complex',`[1:a]adelay=900|900,apad,atrim=0:${input.duration}[tick];[0:a][tick]amix=inputs=2:duration=first`,'-ac','1',sfxPath],{stdio:'ignore'});
-  if(productVoice){
-    execFileSync(input.ffmpeg,['-y','-i',voiceoverPath,'-i',musicPath,'-i',sfxPath,'-filter_complex',`[0:a]volume=1.0,apad,atrim=0:${input.duration}[vo];[1:a]volume=1.0[a2];[2:a]volume=0.65[a3];[vo][a2][a3]amix=inputs=3:duration=first:dropout_transition=0,loudnorm=I=-16:TP=-1.5:LRA=11[aout]`,'-map','[aout]','-t',String(input.duration),mixPath],{stdio:'ignore'});
-  } else {
-    // Product rule: never synthesize unacceptable robotic VO. A music+SFX bed is better than shipping espeak.
-    execFileSync(input.ffmpeg,['-y','-i',musicPath,'-i',sfxPath,'-filter_complex',`[0:a]volume=1.0[a1];[1:a]volume=0.75[a2];[a1][a2]amix=inputs=2:duration=first,loudnorm=I=-22:TP=-2:LRA=9[aout]`,'-map','[aout]','-t',String(input.duration),mixPath],{stdio:'ignore'});
-  }
-  writeFileSync(notesPath,[`# Timing notes`,``,`Target duration: ${input.duration}s`,`Voiceover required: ${input.voiceoverRequired}`,(productVoice?`Voiceover source: configured product voice (${path.basename(productVoice)})`:'Voiceover source: none — unacceptable local robotic TTS is prohibited for product renders'),`Music bed: generated minimal bed`,`SFX: focus/reveal tick cue`,``].join('\n'));
-  return {audioDir,narrationPath,voiceoverPath,musicPath,sfxPath,mixPath,notesPath,voiceover_source:productVoice?'configured-product-voice':null,product_voiceover_usable:Boolean(productVoice),voiceover_required:input.voiceoverRequired,voiceover_blocker:productVoice?null:'acceptable_voiceover_source_missing'};
+  execFileSync(input.ffmpeg,['-y','-i',musicPath,'-i',sfxPath,'-filter_complex','[0:a]volume=1.0[a1];[1:a]volume=0.75[a2];[a1][a2]amix=inputs=2:duration=first,loudnorm=I=-22:TP=-2:LRA=9,aresample=48000[aout]','-map','[aout]','-ar','48000','-t',String(input.duration),mixPath],{stdio:'ignore'});
+  writeFileSync(notesPath,'# Offline fixture\n\nNo narration source. Not accepted as a narrated product video.\n');
+  return {audioDir,narrationPath,voiceoverPath,musicPath,sfxPath,mixPath,notesPath,voiceover_source:null,product_voiceover_usable:false,voiceover_required:input.voiceoverRequired,voiceover_blocker:'acceptable_voiceover_source_missing'};
 }
 function hasNativeTextLayouts(storyboard:any){
   const timeline=storyboard.timeline??[];
@@ -161,7 +161,7 @@ export async function createDraftArtifact(input:{job_id:string;script:any;storyb
   const ffmpeg=ensureFfmpeg();
   const voiceoverRequired=Boolean(narration && narration.length>0);
   const audio=makeAudioTrack({ffmpeg,duration,dir,narration,voiceoverRequired,voiceoverPath:generatedVoice?.path});
-  execFileSync(ffmpeg,['-y','-i',videoTmpPath,'-i',audio.mixPath,'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','160k','-shortest',videoPath],{stdio:'ignore'});
+  execFileSync(ffmpeg,['-y','-i',videoTmpPath,'-i',audio.mixPath,'-map','0:v:0','-map','1:a:0','-c:v','copy','-c:a','aac','-b:a','160k','-ar','48000','-ac','1','-shortest',videoPath],{stdio:'ignore'});
   const audioMetrics=verifyAudible(ffmpeg,videoPath);
   makeBeatContactSheet({ffmpeg,videoPath,contactSheetPath,timelineScenes,duration,fps});
   if(!existsSync(videoPath) || !existsSync(contactSheetPath)) throw Object.assign(new Error('Draft render output missing'),{code:'render_failed'});
