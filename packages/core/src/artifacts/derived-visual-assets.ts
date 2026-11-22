@@ -58,7 +58,7 @@ export function createDerivedVisualAssets(input:{job_id:string;storyboard:any;ou
   const scenes=storyboard.timeline ?? [];
   const previewAssets=storyboard.preview_assets ?? [];
   if(!scenes.length) throw Object.assign(new Error('Storyboard has no timeline for derived visuals'),{code:'business_validation_failed'});
-  const outRoot=input.outputRoot ?? path.join(process.cwd(),'outputs','derived-visual-assets',input.job_id,storyboard.id ?? `storyboard_${randomUUID()}`);
+  const outRoot=input.outputRoot ?? path.join(process.env.OUTPUTS_PATH ?? path.join(process.cwd(),'outputs'),'derived-visual-assets',input.job_id,storyboard.id ?? `storyboard_${randomUUID()}`);
   mkdirSync(outRoot,{recursive:true});
   const assets=scenes.map((scene:any,idx:number)=>{
     const source=findEvidenceAsset(scene,previewAssets);

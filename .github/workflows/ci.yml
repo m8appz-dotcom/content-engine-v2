@@ -62,8 +62,8 @@ jobs:
       - name: Reproduce portfolio walkthrough
         run: npm run demo
 
-      - name: Build
-        run: npm run build
+      - name: Build original hosted app
+        run: CONTENT_ORIGINAL_WORKSPACE=1 npm run build
 
       - name: Dependency audit (all packages)
         run: npm audit --audit-level=low

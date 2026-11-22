@@ -5,6 +5,9 @@ export const PUBLISH_ROLES = ['owner','operator'] as const;
 export type ContentEngineRole = 'owner'|'reviewer'|'operator'|'viewer'|'service_worker';
 
 export function requireKnownActor(db:Database.Database, actorId:string|null|undefined, allowedRoles:readonly ContentEngineRole[], action:string){
+  const authenticatedActor = (db as any).workspaceActor;
+  if (authenticatedActor && actorId !== authenticatedActor)
+    throw Object.assign(new Error('This review must use your signed-in identity.'), { code:'forbidden' });
   if(!actorId) throw Object.assign(new Error(`${action} requires actor_id/approved_by`),{code:'unauthorized'});
   const actor=db.prepare('SELECT id,name,email,role FROM users WHERE id=?').get(actorId) as any;
   if(!actor) throw Object.assign(new Error(`${action} actor not found`),{code:'unauthorized'});
