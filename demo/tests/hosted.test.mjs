@@ -5,7 +5,7 @@ import path from "node:path";
 import { tmpdir } from "node:os";
 import { mkdtempSync, rmSync, mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { createDemoServer } from "../server.mjs";
+import { createDemoServer, invitationHash } from "../server.mjs";
 import engine from "../engine-adapter.mjs";
 
 const root = path.resolve(
@@ -13,6 +13,7 @@ const root = path.resolve(
   "../public",
 );
 const origin = "https://content.example.test";
+const invitation = Buffer.alloc(32, 9).toString("base64url");
 test("hosted deployment rejects insecure origins, capture and exposed storage", () => {
   for (const invalid of [
     "http://content.example.test",
@@ -45,6 +46,7 @@ test("HTTPS contract enforces exact host/origin/RP, single-use challenges and re
   process.env.DEMO_SERVICE_TOKEN = secret;
   const server = createDemoServer({
     hosted: true,
+    registrationInvites: [invitationHash(invitation)],
     origin,
     root,
     storePath: path.join(state, "workspace.json"),
@@ -106,7 +108,9 @@ test("HTTPS contract enforces exact host/origin/RP, single-use challenges and re
     ).status,
     403,
   );
-  const options = await request("/auth/register/options", "POST", {});
+  const options = await request("/auth/register/options", "POST", {
+    invite: invitation,
+  });
   const registration = JSON.parse(options.body);
   assert.equal(registration.rp.id, "content.example.test");
   assert.equal(
