@@ -92,6 +92,22 @@ function fixture(t) {
 }
 const linux = { skip: process.platform !== "linux" };
 test(
+  "current-pointer and active-process drift refuses before stopping the previous service",
+  linux,
+  async (t) => {
+    const f = fixture(t);
+    f.hooks.verifyRunning = () => {
+      throw Error("active release drift");
+    };
+    await assert.rejects(
+      deployRelease(f.options, f.hooks),
+      /active release drift/,
+    );
+    assert.deepEqual(f.calls, []);
+    assert.equal(realpathSync(f.current), f.previous);
+  },
+);
+test(
   "parent-valid 8.55 MB original store requires migration before any stop, pointer change or restart",
   linux,
   async (t) => {
@@ -127,7 +143,13 @@ test(
     const f = fixture(t),
       before = readFileSync(f.options.storePath),
       receipt = await deployRelease(f.options, f.hooks);
-    assert.deepEqual(f.calls, ["stop", "restart", "health", "running"]);
+    assert.deepEqual(f.calls, [
+      "running",
+      "stop",
+      "restart",
+      "health",
+      "running",
+    ]);
     assert.equal(realpathSync(f.current), f.options.release);
     assert.deepEqual(readFileSync(f.options.storePath), before);
     assert.deepEqual(
@@ -156,6 +178,7 @@ test(
       /readiness fixture failure/,
     );
     assert.deepEqual(f.calls, [
+      "running",
       "stop",
       "restart",
       "health",
@@ -180,7 +203,13 @@ test(
       deployRelease(f.options, f.hooks),
       /migration is required/,
     );
-    assert.deepEqual(f.calls, ["stop", "restart", "health", "running"]);
+    assert.deepEqual(f.calls, [
+      "running",
+      "stop",
+      "restart",
+      "health",
+      "running",
+    ]);
     assert.equal(realpathSync(f.current), f.previous);
     assert.equal(statSync(f.options.storePath).size, 9 * 1024 * 1024);
   },

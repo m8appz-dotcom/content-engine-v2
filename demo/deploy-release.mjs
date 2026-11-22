@@ -267,6 +267,7 @@ export async function deployRelease(
       return JSON.parse(result.stdout);
     };
     preflight();
+    await running(previous);
     // No state, release pointer or service mutation occurs before the isolated gate above.
     if (realpathSync(current) !== previous)
       throw Error("Another deployment changed the release; preserve its work.");
