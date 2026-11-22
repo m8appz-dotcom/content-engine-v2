@@ -7,7 +7,7 @@ export default function WorkspaceAccess({children}:{children:ReactNode}){
   const hosted=process.env.NEXT_PUBLIC_CONTENT_WORKSPACE==='1';
   const [status,setStatus]=useState<any>(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[invite,setInvite]=useState('');
   async function load(){const r=await fetch('/auth/status',{cache:'no-store'});if(!r.ok)throw Error('Access is temporarily unavailable. Please try again.');setStatus(await r.json());}
-  useEffect(()=>{if(hosted)load().catch(e=>setError(e.message));},[hosted]);
+  useEffect(()=>{if(!hosted)return;const refresh=()=>{load().catch(e=>setError(e.message));};refresh();window.addEventListener('content:session-expired',refresh);return()=>window.removeEventListener('content:session-expired',refresh);},[hosted]);
   async function request(route:string,body:unknown={}){const r=await fetch('/auth/'+route,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(typeof data.error==='string'?data.error:'Passkey access could not finish. Try again.');return data;}
   async function access(kind:'register'|'login'){setBusy(true);setError('');try{const options=await request(kind+'/options',kind==='register'?{invite}:{});const response=kind==='register'?await startRegistration({optionsJSON:options}):await startAuthentication({optionsJSON:options});await request(kind+'/verify',response);setInvite('');await load();}catch{setError('Passkey access was cancelled or could not finish. Your saved projects are safe.');}finally{setBusy(false);}}
   if(!hosted)return children;
