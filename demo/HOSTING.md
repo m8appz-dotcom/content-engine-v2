@@ -10,7 +10,10 @@ Public visitors may inspect and edit the authored examples locally. Creating a s
 
 Private state is stored with owner-only permissions outside the immutable release. Workspaces and engine outputs persist on disk for recovery; the service does not silently delete them. Sessions and pending challenges expire in memory and are invalidated by restart. Task discovery expires after one hour, so export completed work promptly. Register a second passkey and export the browser workspace before relying on server storage. Contact the administrator to remove a saved workspace; this initial portfolio release has no self-service account deletion.
 
-The hosted server limits registrations to 250 workspaces and 1,000 public credentials, active sessions to 1,024, pending challenges to 512, and saved task directories to 300. Existing access remains available when registration capacity is full. The gateway retains its two-task concurrency, 12 accepted tasks per owner per minute, bounded payloads and private artifact ownership. Reaching storage capacity blocks new tasks and preserves previous files. The service unit bounds CPU, memory and tasks; no model is loaded by the Content planner.
+The hosted server limits registrations to 16 private accounts and 64 public credentials (four per account), active sessions to 1,024, pending challenges to 512, and saved task directories to 300. Existing access remains available when registration capacity is full. The gateway retains its two-task concurrency, 12 accepted tasks per owner per minute, bounded payloads and private artifact ownership. Reaching storage capacity blocks new tasks and preserves previous files. The service unit bounds CPU, memory and tasks; no model is loaded by the Content planner.
+
+
+Each admitted account retains a reserved 256 KiB and 6,000 JSON nodes across its five supported private workspace slots; a slot may use at most 192 KiB. Another account cannot consume that reservation. Private registration has 16 finite slots; when full, the administrator must review capacity before admitting more users. Public authored examples remain available without registering. Credential metadata and pre-read store sizes are bounded; invalid/orphaned historical stores are preserved for offline recovery rather than truncated.
 
 ## Isolated deployment and rollback
 
