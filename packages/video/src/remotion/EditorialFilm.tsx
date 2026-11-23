@@ -13,21 +13,16 @@ function Caption({scene}:{scene:EditorialScene}){
  return <div style={{position:'absolute',left:72,right:72,bottom:74,minHeight:138,borderTop:`2px solid ${rule}`,paddingTop:26,fontFamily:sans,fontSize:46,lineHeight:1.25,color:ink}}>{active?.text||''}</div>;
 }
 function Source({scene}:{scene:EditorialScene}){
- const frame=useCurrentFrame(),{fps}=useVideoConfig();
  const image=scene.image!;
- const width=936,height=930,fit=Math.min(1.35,width/image.width,height/image.height);
- const detail=image.focus.width<image.width||image.focus.height<image.height;
- const detailScale=Math.min(1.35,width/image.focus.width,430/image.focus.height);
- const detailWidth=image.focus.width*detailScale,detailHeight=image.focus.height*detailScale;
- const opacity=interpolate(frame,[fps*.2,fps*.4],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
- // Context and detail both display the intact source. The inset contains the
- // entire validated focus rectangle, so no moving crop cuts through its copy.
+ const width=936,height=930,scale=Math.min(1.35,width/image.focus.width,height/image.focus.height);
+ const proofWidth=image.focus.width*scale,proofHeight=image.focus.height*scale;
+ // Display one complete source region at a stable scale. The source image
+ // stays intact; no inset, moving crop or duplicate screenshot obscures it.
  return <>
   <div style={{position:'absolute',left:72,right:72,top:170,fontFamily:serif,fontSize:scene.headline.length>48?82:98,lineHeight:1.03,letterSpacing:-2,whiteSpace:'pre-line'}}>{scene.headline}</div>
-  <div style={{position:'absolute',left:72,right:72,top:465,height,overflow:'hidden',borderTop:`2px solid ${ink}`,borderBottom:`2px solid ${ink}`,background:'#fff'}}>
-   <Img src={image.src} style={{position:'absolute',left:(width-image.width*fit)/2,top:(height-image.height*fit)/2,width:image.width*fit,height:image.height*fit}}/>
+  <div style={{position:'absolute',left:72+(width-proofWidth)/2,top:465+(height-proofHeight)/2,width:proofWidth,height:proofHeight,overflow:'hidden',borderTop:`2px solid ${ink}`,borderBottom:`2px solid ${ink}`,background:'#fff'}}>
+   <Img src={image.src} style={{position:'absolute',left:-image.focus.x*scale,top:-image.focus.y*scale,width:image.width*scale,height:image.height*scale}}/>
   </div>
-  {detail&&<div style={{position:'absolute',left:72+(width-detailWidth)/2,top:1395-detailHeight,width:detailWidth,height:detailHeight,overflow:'hidden',background:'#fff',outline:`2px solid ${ink}`,opacity}}><Img src={image.src} style={{position:'absolute',left:-image.focus.x*detailScale,top:-image.focus.y*detailScale,width:image.width*detailScale,height:image.height*detailScale}}/></div>}
   {scene.sourceName!==scene.headline&&<div style={{position:'absolute',left:72,right:72,top:1440,fontFamily:sans,fontSize:38,lineHeight:1.3}}>{scene.sourceName}</div>}
  </>;
 }
