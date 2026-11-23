@@ -8,6 +8,8 @@ The engine turns approved evidence into story angles, scripts, storyboards, and 
 
 The original Next.js production workspace: real project sources, AI-assisted angles and scripts, explicit human review, storyboards and rendered video playback.
 
+[Watch the 20-second film](https://kennethyepez.com/projects/content-engine#rendered-film) — an actual engine output from public project sources, the reviewed English script and its approved storyboard. The recording plays directly on the portfolio page; opening private projects requires a passkey.
+
 [Open the production workspace](https://content.kennethyepez.com/app) · [Original app guide](docs/ORIGINAL-APP.md) · [Engineering case](docs/CASE-STUDY.md)
 
 ![Content Engine's connected editorial workspace and approved English script](docs/images/editorial-live-desktop.png)
