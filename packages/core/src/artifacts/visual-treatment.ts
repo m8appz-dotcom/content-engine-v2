@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 const TREATMENTS=['full_screenshot_hero','context_crop','detail_callout','risk_comparison','result_bridge','benefit_checklist','human_decision_card'] as const;
 const TITLES:Record<string,string>={hook:'Real evidence',setup:'Clear context',proof:'Verifiable detail',tension:'An unsupported claim',reveal:'From evidence to story',benefit:'A supported benefit',cta:'Your decision'};
-const TEXT:Record<string,string>={hook:'Real evidence',setup:'What you are seeing',proof:'Verifiable detail',tension:'No proof. Do not publishtion',reveal:'Evidence → story',benefit:'A supported claim',cta:'Human review'};
+const TEXT:Record<string,string>={hook:'Real evidence',setup:'What you are seeing',proof:'Verifiable detail',tension:'Do not publish an unsupported claim',reveal:'Evidence → story',benefit:'A supported claim',cta:'Human review'};
 const FOCAL:Record<string,string>={hook:'full evidence screen, scaled to be legible',setup:'top navigation and page context',proof:'central proof/detail area, enlarged',tension:'proof vs unsupported claim contrast',reveal:'evidence-to-story bridge area',benefit:'checklist/benefit area next to proof',cta:'approval/status/next-step area'};
 const LAYOUT:Record<string,string>={hook:'hero_proof_card',setup:'context_summary_card',proof:'proof_zoom_card',tension:'risk_split_card',reveal:'transformation_diagram',benefit:'benefit_checklist',cta:'human_review_card'};
 const PURPOSE:Record<string,string>={hook:'reveal',setup:'orient',proof:'magnify',tension:'compare',reveal:'connect',benefit:'stack',cta:'decide'};
@@ -36,7 +36,7 @@ function conversationRecipes(input:{job_id:string;script:any;production_plan:any
   const titles=['Feedback real','Diagnóstico','Nueva fuente','Your decision','Fix aplicado','Benefit','Lección'];
   return scenes.map((scene:any,idx:number)=>{
     const ev=byId(scene.evidence_ids) ?? conv[Math.min(idx,conv.length-1)] ?? conv[0];
-    const quote=idx===1?'Falló en video, voz y criterio semántico.':idx===2?'La fuente correcta era la conversación, no una captura pobre.':idx===3?'Exacto, aplica el fix':idx===4?'Conector de evidencia conversacional':idx===5?'Feedback real, menos dependencia de screenshots pobres.':idx===6?'La mejor señal está en la conversación.':String(ev.title ?? ev.description ?? scene.voiceover_line ?? '').slice(0,220);
+    const quote=String(ev.metadata?.quote ?? ev.description ?? ev.title ?? '').slice(0,220);
     const foreground=titles[idx] ?? 'Real conversation';
     return {scene_id:scene.id,beat_id:scene.beat_id,beat_kind:scene.beat_kind,human_scene_title:foreground,foreground_text:foreground,focal_area:'conversation quote as primary visual',evidence_treatment:'conversation_quote_card',viewer_read:idx===0?'Una crítica humana real cambió el estándar.':idx===3?'Una decisión humana ordenó aplicar el fix.':idx===4?'El feedback se convirtió en un conector del sistema.':idx===5?'El contenido ahora nace de feedback real.':'La conversación es la evidencia primaria.',visual_change_from_previous:idx===0?'Abrir con la cita humana sin suavizar.':'Mostrar un nuevo evento conversacional en orden causal.',needs_new_capture:false,max_caption_words:10,layout_treatment:{version:'layout_treatment_v1',layout_type:layouts[idx] ?? 'quote_card',dominant_element:'conversation_quote',source_screenshot_role:'not_visible',safe_margin_px:96,min_proof_area_percent:70,visual_hierarchy_order:[foreground,'quote','meaning'],proof_module:{title:foreground,value:quote,support_text:scene.voiceover_line ?? quote,event_type:ev.metadata?.event_type ?? 'conversation_event'},text_zones:[{role:'title',text:foreground,max_chars:28,x:96,y:140,w:888,h:130},{role:'quote',text:quote,max_chars:180,x:96,y:360,w:888,h:720}],motion_purpose:idx===0?'reveal':idx===3?'decide':idx===4?'connect':'explain',forbidden_reads:['tiny quote','generic evidence label','screenshot wallpaper','hidden human critique','more than three competing elements']},forbidden:['technical template names visible','tiny quote','generic evidence label','screenshot wallpaper']};
   });
@@ -61,8 +61,8 @@ export function createVisualTreatmentArtifact(input:{job_id:string;script:any;pr
   const hero=evidenceTitle(input.evidence);
   const recipes=convRecipes ?? scenes.map((scene:any,idx:number)=>{
     const k=kind(scene,idx,scenes.length-1);
-    const foreground=TEXT[k] ?? cleanText(scene.caption_text || scene.voiceover_line || k,6);
-    const humanTitle=TITLES[k] ?? foreground;
+    const foreground=cleanText(scene.voiceover_line || scene.caption_text || hero,8);
+    const humanTitle=foreground;
     return {
       scene_id:scene.id,
       beat_id:scene.beat_id,
@@ -79,8 +79,8 @@ export function createVisualTreatmentArtifact(input:{job_id:string;script:any;pr
         safe_margin_px:96,
         min_proof_area_percent:k==='proof'?50:30,
         visual_hierarchy_order:[foreground,'proof module',k==='cta'?'human decision':'supporting evidence'].slice(0,3),
-        proof_module:{title:foreground,value:k==='cta'?'Review pending':k==='tension'?'Do not publish without proof':k==='benefit'?'A supported claim':'Visible evidence',support_text:k==='proof'?'A closer look at the source':`Based on ${hero}`},
-        text_zones:[{role:'title',text:foreground,max_chars:28,x:96,y:150,w:888,h:170},{role:'support',text:k==='tension'?'No proof. Do not publishtion':k==='cta'?'Review before publishing':'Visible, inspectable proof',max_chars:64,x:96,y:1350,w:888,h:260}],
+        proof_module:{title:foreground,value:hero,support_text:scene.voiceover_line ?? scene.caption_text ?? hero},
+        text_zones:[{role:'title',text:foreground,max_chars:28,x:96,y:150,w:888,h:170},{role:'support',text:k==='tension'?'Do not publish an unsupported claim':k==='cta'?'Review before publishing':'Visible, inspectable proof',max_chars:64,x:96,y:1350,w:888,h:260}],
         motion_purpose:PURPOSE[k] ?? 'reveal',
         forbidden_reads:['screenshot wallpaper','clutter','unreadable UI','cropped copy','more than three competing elements']
       },

@@ -1,7 +1,7 @@
 import { existsSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-export const exampleSources = ['docs/architecture.md', 'docs/images/original-app-baseline.jpg'] as const;
+export const exampleSources = ['docs/architecture.md', 'docs/images/original-app-baseline.jpg', 'docs/images/editorial-reviewed-script-original.jpg'] as const;
 export function requirePublicSource(value: unknown) {
   if (typeof value !== 'string' || !(exampleSources as readonly string[]).includes(value))
     throw Object.assign(new Error('Choose one of the prepared public sources.'), { code: 'forbidden' });
