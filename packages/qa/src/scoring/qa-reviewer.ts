@@ -36,10 +36,11 @@ export function reviewDraft(input:{job_id:string;draft:any;script:any;storyboard
   const max=Number(metrics.max_volume_db);
   if(!draft.notes?.audio_verified) blocking_issues.push('audio_not_verified');
   if(!draft.notes?.voiceover_path || !existsSync(draft.notes.voiceover_path)) blocking_issues.push('voiceover_missing');
-  if(!draft.notes?.music_path || !existsSync(draft.notes.music_path)) blocking_issues.push('music_bed_missing');
-  if(!draft.notes?.sfx_path || !existsSync(draft.notes.sfx_path)) blocking_issues.push('sfx_missing');
-  if(needsVoiceover(storyboard) && !draft.notes?.voiceover_source) blocking_issues.push('voiceover_source_missing');
-  if(needsVoiceover(storyboard) && draft.notes?.product_voiceover_usable!==true) blocking_issues.push('product_voiceover_unusable');
+  const voiceOnly=draft.notes?.audio_mix_mode==='voice_only';
+  if(!voiceOnly && (!draft.notes?.music_path || !existsSync(draft.notes.music_path))) blocking_issues.push('music_bed_missing');
+  if(!voiceOnly && (!draft.notes?.sfx_path || !existsSync(draft.notes.sfx_path))) blocking_issues.push('sfx_missing');
+  if((needsVoiceover(storyboard)||voiceOnly) && !draft.notes?.voiceover_source) blocking_issues.push('voiceover_source_missing');
+  if((needsVoiceover(storyboard)||voiceOnly) && draft.notes?.product_voiceover_usable!==true) blocking_issues.push('product_voiceover_unusable');
   if(String(draft.notes?.voiceover_source ?? '').includes('espeak')) blocking_issues.push('unacceptable_robotic_voiceover');
   if(!Number.isFinite(mean) || !Number.isFinite(max)) blocking_issues.push('audio_volume_metrics_missing');
   else if(mean < -45 || max < -30) blocking_issues.push('audio_effectively_silent');
