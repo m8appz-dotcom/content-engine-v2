@@ -115,8 +115,8 @@ function probeAudio(videoPath: string): AudioProbe {
 }
 
 /**
- * A prior render must never silently fall back to a fresh TTS request. Only a
- * genuinely initial render returns null. Caption/layout edits are intentionally
+ * A prior recording of the same script must never silently fall back to TTS.
+ * Only a script without an earlier recording returns null. Caption/layout edits are intentionally
  * excluded: they can change while the approved spoken words stay identical.
  * The optional probe is a server-side test dependency, not a request option.
  */
