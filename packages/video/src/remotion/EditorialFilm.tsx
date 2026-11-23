@@ -34,7 +34,7 @@ function Document({scene}:{scene:EditorialScene}){
   <div style={{position:'absolute',left:72,right:72,top:170,fontFamily:serif,fontSize:scene.headline.length>48?82:98,lineHeight:1.03,letterSpacing:-2,whiteSpace:'pre-line'}}>{scene.headline}</div>
   <div style={{position:'absolute',left:72,right:72,top:440,bottom:390}}>
    <Lines><div style={{fontFamily:sans,fontSize:36,letterSpacing:2,marginBottom:42}}>{scene.excerptKind==='approved_claim'?'THE LINKED CLAIM':'FROM THE SOURCE'}</div><div style={{fontFamily:serif,fontSize:scene.excerptKind==='approved_claim'&&(scene.excerpt?.length??0)<=130?76:58,lineHeight:1.17,whiteSpace:'pre-wrap'}}>{scene.excerpt}</div></Lines>
-   {steps.length>0&&<div style={{marginTop:48}}><div style={{fontFamily:sans,fontSize:34,letterSpacing:2,marginBottom:26}}>THE CLAIM</div>{steps.map((label,i)=><div key={label} style={{display:'flex',gap:30,alignItems:'baseline',padding:'22px 0',borderTop:`2px solid ${rule}`,opacity:i>active ? 0.38 : 1,transform:`translateY(${i>active?8:0}px)`}}><span style={{fontFamily:sans,fontSize:34,width:55}}>{String(i+1).padStart(2,'0')}</span><span style={{fontFamily:serif,fontSize:54,lineHeight:1.15}}>{label}</span></div>)}</div>}
+   {steps.length>0&&<div style={{marginTop:48}}><div style={{fontFamily:sans,fontSize:34,letterSpacing:2,marginBottom:26}}>CHECK FLOW</div>{steps.map((label,i)=><div key={label} style={{display:'flex',gap:30,alignItems:'baseline',padding:'22px 0',borderTop:`2px solid ${rule}`,opacity:i>active ? 0.38 : 1,transform:`translateY(${i>active?8:0}px)`}}><span style={{fontFamily:sans,fontSize:34,width:55}}>{String(i+1).padStart(2,'0')}</span><span style={{fontFamily:serif,fontSize:54,lineHeight:1.15}}>{label}</span></div>)}</div>}
   </div>
   {scene.sourceName!==scene.headline&&<div style={{position:'absolute',left:72,right:72,top:1510,fontFamily:sans,fontSize:36,lineHeight:1.3}}>{scene.sourceName}</div>}
  </>;
@@ -53,8 +53,10 @@ function Decision({scene}:{scene:EditorialScene}){
  </>;
 }
 function Scene({scene,index,brand,total}:{scene:EditorialScene;index:number;brand:string;total:number}){
+ const frame=useCurrentFrame(),{fps}=useVideoConfig();
+ const label=scene.kind==='decision'?`Review / ${frame/fps<(scene.decisionRevealSec??0)?'Scope':'Decision'}`:scene.eyebrow;
  return <AbsoluteFill style={{background:paper,color:ink,overflow:'hidden'}}>
-  <div style={{position:'absolute',left:72,right:72,top:55,height:60,borderBottom:`2px solid ${ink}`,display:'flex',alignItems:'baseline',justifyContent:'space-between',fontFamily:sans,fontSize:34}}><span>{brand} / {scene.eyebrow}</span><span>{String(index+1).padStart(2,'0')} / {String(total).padStart(2,'0')}</span></div>
+  <div style={{position:'absolute',left:72,right:72,top:55,height:60,borderBottom:`2px solid ${ink}`,display:'flex',alignItems:'baseline',justifyContent:'space-between',fontFamily:sans,fontSize:34}}><span>{brand} / {label}</span><span>{String(index+1).padStart(2,'0')} / {String(total).padStart(2,'0')}</span></div>
   {scene.kind==='source'?<Source scene={scene}/>:scene.kind==='document'?<Document scene={scene}/>:<Decision scene={scene}/>}
   <Caption scene={scene}/>
  </AbsoluteFill>;
