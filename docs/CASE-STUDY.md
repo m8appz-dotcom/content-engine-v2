@@ -19,6 +19,12 @@ Kenneth Yepez directs product requirements, architecture, integration and accept
 
 ## Inspect an actual result
 
+[Watch the finished 20-second film](https://kennethyepez.com/projects/content-engine#rendered-film). The native renderer made it from the project's public sources, reviewed English script and approved three-scene storyboard. The film pairs a real application capture with a literal architecture excerpt and the recorded editorial decisions. It preserves the previously accepted narration without new synthesis, music or effects.
+
+The final artifact played from start to finish in the authenticated production workspace on November 22, 2026. An independent AI reviewer inspected every second and additional transition frames, finding no actionable visual defects. That inspection does not represent a new human visual approval or a fresh listening test. The holder's earlier listening acceptance applies to the unchanged audio recording.
+
+## Reproduce the offline contracts
+
 The native walkthrough was executed again in an isolated checkout. It produced three schema-valid story candidates, a script with mapped evidence and a rejected unsupported-claim negative control. The output contains the source and actual native artifacts.
 
 ```sh
