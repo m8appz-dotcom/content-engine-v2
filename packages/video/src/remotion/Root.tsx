@@ -13,7 +13,7 @@ const Root:React.FC=()=> <Composition
   fps={fps}
   width={1080}
   height={1920}
-  defaultProps={{title:input.title ?? 'Content Engine v2',scenes:input.scenes ?? [],brand:input.brand ?? {accent:'#66e3a2'}}}
+  defaultProps={{title:input.title ?? 'Content Engine v2',scenes:input.scenes ?? [],brand:input.brand ?? {accent:'#66e3a2'},editorialFilm:input.editorialFilm}}
 />;
 
 registerRoot(Root);

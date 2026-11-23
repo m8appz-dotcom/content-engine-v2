@@ -35,7 +35,7 @@ export const copy = {
   "checkVideo": "Check rendered video",
   "checksTitle": "Video checks",
   "checksEmpty": "No checks run yet. Render the video first, then inspect the file here.",
-  "checksNote": "Use these checks alongside your own review of the video. Publishing is a separate decision.",
+  "checksNote": "These file checks do not rate the design. Watch and listen to the complete video before approving it.",
   "accessTitle": "Passkey sign-in",
   "accessBody": "Sign in with your existing passkey to open projects, record script and storyboard approvals, and render video. Nothing publishes from this workspace.",
   "signIn": "Sign in with passkey",

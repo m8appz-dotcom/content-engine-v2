@@ -16,6 +16,8 @@ test('QA blocks drafts that have video but no verified audible audio',()=>{
   assert.equal(qa.pass,false);
   assert.ok(qa.blocking_issues.includes('audio_not_verified'));
   assert.ok(qa.blocking_issues.includes('audio_effectively_silent'));
-  assert.equal(qa.scores.audio_quality,2);
+  assert.equal(qa.scores.audio_quality,null);
+  assert.equal(qa.technical_checks.checks.audio_measurement_metadata.status,'failed');
+  assert.equal(qa.perceptual_review.status,'pending');
   rmSync(out,{recursive:true,force:true});
 });

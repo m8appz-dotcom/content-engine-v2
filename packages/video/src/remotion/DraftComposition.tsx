@@ -1,5 +1,7 @@
 import React from 'react';
 import { AbsoluteFill, Img, Sequence, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
+import {EditorialFilm} from './EditorialFilm';
+import type {EditorialFilm as EditorialFilmData} from './editorial-types';
 
 export type SceneTemplate='HookScene'|'ContextSetupScene'|'ProofZoomScene'|'RiskContrastScene'|'ResultRevealScene'|'BenefitStackScene'|'CtaScene'|'ProofDrivenScene';
 export type DraftScene={
@@ -27,6 +29,7 @@ export type DraftVideoProps={
   title:string;
   scenes:DraftScene[];
   brand?:{accent?:string;background?:string};
+  editorialFilm?:EditorialFilmData;
 };
 
 function shortCaption(text:string){
@@ -137,8 +140,9 @@ function SceneLibraryDispatcher({scene,index,accent}:{scene:DraftScene;index:num
   if(template==='CtaScene') return <CtaScene scene={scene} index={index} accent={accent}/>;
   return <ProofZoomScene scene={scene} index={index} accent={accent}/>;
 }
-export const DraftVideo:React.FC<DraftVideoProps>=({title,scenes,brand})=>{
+export const DraftVideo:React.FC<DraftVideoProps>=({title,scenes,brand,editorialFilm})=>{
   const {durationInFrames}=useVideoConfig();
+  if(editorialFilm)return <EditorialFilm film={editorialFilm}/>;
   const accent=brand?.accent ?? '#66e3a2';
   const safeScenes=scenes.length?scenes:[{id:'fallback',startFrame:0,durationFrames:durationInFrames,caption:title,intent:'Evidence real visible',assetPath:'',movement:'proof_reveal',sceneTemplate:'HookScene'} as DraftScene];
   return <AbsoluteFill style={{background:'#07070a'}}>{safeScenes.map((scene,index)=><Sequence key={scene.id} from={scene.startFrame} durationInFrames={scene.durationFrames}><SceneLibraryDispatcher scene={scene} index={index} accent={accent}/></Sequence>)}</AbsoluteFill>;
