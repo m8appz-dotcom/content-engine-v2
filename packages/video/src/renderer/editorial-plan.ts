@@ -3,6 +3,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {isIP} from 'node:net';
 import type {EditorialCaption,EditorialFilm,EditorialScene} from '../remotion/editorial-types';
+import {hasEditorialReviewSemantics} from '../../../core/src/artifacts/editorial-semantics';
 
 export type EditorialSpeechSegment={text:string;start:number;end:number};
 export type EditorialEvidenceAsset={evidence_id:string;path:string;kind?:string;type?:string;title?:string;description?:string;privacy_level?:string;rights_status?:string;focus?:{x:number;y:number;width:number;height:number}};
@@ -32,6 +33,17 @@ function balancedGroups<T>(items:readonly T[],max=7):T[][]{
  let offset=0;for(let index=0;index<count;index++){const length=size+(index<extra?1:0);groups.push(items.slice(offset,offset+length));offset+=length;}
  return groups;
 }
+function phraseGroups<T>(items:readonly T[],word:(item:T)=>string):T[][]{
+ if(items.length<=7)return items.length?[[...items]]:[];
+ const phrases:T[][]=[];let start=0;
+ for(let index=0;index<items.length-1;index++){
+  if(/[,;][\u2019\u201d"')\]]*$/.test(word(items[index]))&&index+1-start>=2&&items.length-index-1>=2){phrases.push(items.slice(start,index+1));start=index+1;}
+ }
+ phrases.push(items.slice(start));
+ const joined:T[][]=[];
+ for(const phrase of phrases){const previous=joined.at(-1);if(previous&&previous.length+phrase.length<=7)previous.push(...phrase);else joined.push([...phrase]);}
+ return joined.flatMap(phrase=>balancedGroups(phrase));
+}
 // Display only a caller-verified public HTTPS origin; this performs no lookup
 // or fetch and does not certify availability of the destination.
 function productOrigin(value:string|undefined):string|undefined{
@@ -53,7 +65,7 @@ export function documentStepsFromClaim(claim:string):string[]{
 export function narrationCaptions(value:string,speechDuration:number):EditorialCaption[]{
  const tokens=words(value);if(!tokens.length||!finite(speechDuration)||speechDuration<=0)invalid('narration_timing_invalid');
  const captions:EditorialCaption[]=[];let used=0;
- for(const group of balancedGroups(tokens)){const start=used/tokens.length*speechDuration;used+=group.length;captions.push({text:group.join(' '),start,end:used/tokens.length*speechDuration});}
+ for(const group of phraseGroups(tokens,word=>word)){const start=used/tokens.length*speechDuration;used+=group.length;captions.push({text:group.join(' '),start,end:used/tokens.length*speechDuration});}
  return captions;
 }
 function inside(root:string,file:string){const relative=path.relative(root,file);return relative!==''&&!relative.startsWith('..'+path.sep)&&relative!=='..'&&!path.isAbsolute(relative);}
@@ -80,18 +92,23 @@ function readImage(file:string){
  const bytes=readFileSync(file),mime=image.codec_name==='png'?'image/png':'image/jpeg';
  return {src:'data:'+mime+';base64,'+bytes.toString('base64'),width,height,focus:{x:0,y:0,width,height}};
 }
-function documentExcerpt(file:string,context:string){
+function documentExcerpt(file:string,context:string,prohibited:readonly string[]){
  if(lstatSync(file).size>262144)invalid('document_too_large');
  const bytes=readFileSync(file),content=bytes.toString('utf8');
  if(!Buffer.from(content,'utf8').equals(bytes)||content.includes('\0'))invalid('document_not_utf8');
  const terms=new Set(words(context.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ')).filter(word=>word.length>3));
- const pieces=content.split(/\r?\n\r?\n/).flatMap(paragraph=>paragraph.length<=320?[paragraph]:paragraph.split(/\r?\n|(?<=[.!?])\s+/));
+ const safe=(piece:string)=>piece.length>0&&piece.length<=160&&!prohibited.some(phrase=>text(piece).toLowerCase().includes(text(phrase).toLowerCase()));
+ // Quote a contiguous rule fragment from the actual source, without exposing
+ // a longer implementation paragraph excluded by the approved storyboard.
+ for(const match of content.matchAll(/\bmust pass\s+([^\r\n]+?)\s+before\b/gi)){
+  const fragment=match[1].trim();if(safe(fragment))return fragment;
+ }
+ const pieces=content.split(/\r?\n\s*\r?\n/);
  const ranked=pieces.map((piece,index)=>({piece:piece.trim(),index,score:words(piece.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ')).reduce((sum,word)=>sum+(terms.has(word)?1:0),0)}))
-  .filter(item=>item.piece.length>=16&&item.piece.length<=320&&item.score>0&&item.piece.charCodeAt(0)!==96).sort((a,b)=>b.score-a.score||a.index-b.index);
+  .filter(item=>item.piece.length>=16&&safe(item.piece)&&item.score>0&&!/^(?:#|`)/.test(item.piece)).sort((a,b)=>b.score-a.score||a.index-b.index);
  if(!ranked.length)invalid('document_not_linked_to_scene');
  return ranked[0].piece;
 }
-function reviewSemantics(value:string){return /\b(?:review(?:s|ed|ing)?|approv(?:e[sd]?|al|ing)|decid(?:e[sd]?|ing)|decision|revis(?:ar|a|ión)|aprob(?:ar|a|ación)|decis(?:ión|ion))\b/iu.test(value);}
 function timedWords(narration:string,speechDuration:number,segments:readonly EditorialSpeechSegment[]|undefined){
  const chunks=segments?.length?segments:[{text:narration,start:0,end:speechDuration}];
  if(chunks.length>1000||text(chunks.map(s=>s.text).join(' '))!==narration)invalid('speech_segments_words_mismatch');
@@ -111,6 +128,8 @@ export function buildContentEditorialFilm(input:EditorialPlanInput){
   if(!narration||!board||!Array.isArray(board.timeline)||!Array.isArray(input.timeline)||!input.timeline.length||input.timeline.length>24)invalid('storyboard_missing');
   if(!finite(input.duration)||!finite(input.speechDuration)||input.duration<=0||input.duration>3600||input.speechDuration<=0||input.speechDuration>input.duration)invalid('narration_timing_invalid');
   const publicProductUrl=productOrigin(input.publicProductUrl);
+  const prohibited=board.editorial_criteria?.must_not_read??[];
+  if(!Array.isArray(prohibited)||prohibited.some((phrase:unknown)=>typeof phrase!=='string'||!text(phrase)))invalid('editorial_criteria_invalid');
   const boardId=identity(board.id??input.storyboard.id),jobId=identity(board.job_id??input.storyboard.job_id),scriptId=identity(board.script_id??input.storyboard.script_id);
   if(text(input.timeline.map(scene=>scene.narration).join(' '))!==narration||text(board.timeline.map((scene:any)=>scene.narration).join(' '))!==narration)invalid('storyboard_narration_mismatch');
   const ids=input.timeline.map(scene=>identity(scene.id));
@@ -174,26 +193,33 @@ export function buildContentEditorialFilm(input:EditorialPlanInput){
    const line=text(scene.narration),range=ranges[index],caption:EditorialCaption[]=[];
    for(let offset=range.first;offset<=range.last;){
     let end=offset;while(end<range.last&&!timed[end].last)end++;
-    // Balance within each provided speech segment, never across its pause.
-    for(const group of balancedGroups(timed.slice(offset,end+1)))caption.push({text:group.map(word=>word.text).join(' '),start:group[0].start,end:group.at(-1)!.end});
+    // Balance within each speech segment. Hold its final caption over a short
+    // following pause, without changing estimated word or measured audio times.
+    for(const group of phraseGroups(timed.slice(offset,end+1),word=>word.text)){
+     const last=group.at(-1)!,next=timed[end+1];
+     const heldEnd=provided&&last.last&&next?Math.min(last.end+.25,next.start):last.end;
+     caption.push({text:group.map(word=>word.text).join(' '),start:group[0].start,end:heldEnd});
+    }
     offset=end+1;
    }
    const result:EditorialScene={id:scene.id,kind,start:starts[index],end:starts[index+1]??input.duration,headline:headline(line.split(/(?<=[.!?])\s+/)[0]),eyebrow:kind==='source'?'Source':kind==='document'?'Document':'Review',sourceId:selected,sourceName:source.name,caption,scriptApproved:input.scriptApproved,storyboardApproved:input.storyboardApproved};
-   if(kind==='source')result.image=source.image!;
+   if(kind==='source'){result.headline=headline(source.name);result.image=source.image!;}
    if(kind==='document'){
-    // Establish a real document link without turning its implementation details
-    // into the film's message or presenting the approved claim as a quotation.
-    documentExcerpt(source.file,line+' '+(source.asset.description??'')+' '+(choice?.selection_reason??''));
+    const excerpt=documentExcerpt(source.file,line+' '+(source.asset.description??'')+' '+(choice?.selection_reason??''),prohibited);
     const claim=line.split(/(?<=[.!?])\s+/)[0];
     if(claim.length>230)invalid('approved_claim_too_long');
-    result.headline=headline(source.name);result.excerpt=claim;result.excerptKind='approved_claim';result.documentSteps=documentStepsFromClaim(claim);
+    result.headline=headline(source.name);result.excerpt=excerpt;result.sourceExcerpt=excerpt;result.excerptKind='source_excerpt';result.documentSteps=documentStepsFromClaim(claim);
    }
    if(kind==='decision'){
     const record=choice?.review_record;
-    if(!reviewSemantics(line)||!record||record.job_id!==jobId||record.script_id!==scriptId||record.storyboard_id!==boardId||record.script_status!=='approved'||record.storyboard_status!=='approved'||!input.scriptApproved||!input.storyboardApproved)invalid('review_record_missing_or_unrelated');
+    if(!hasEditorialReviewSemantics(line)||!record||record.job_id!==jobId||record.script_id!==scriptId||record.storyboard_id!==boardId||record.script_status!=='approved'||record.storyboard_status!=='approved'||!input.scriptApproved||!input.storyboardApproved)invalid('review_record_missing_or_unrelated');
     identity(record.script_approval_id);identity(record.storyboard_approval_id);
     if(record.script_approval_id===record.storyboard_approval_id)invalid('review_records_not_distinct');
     const sentences=line.split(/(?<=[.!?])\s+/);result.decisionText=sentences[0];result.decisionActions=sentences.slice(1);
+    const opening=sentences[0].split(',')[0].replace(/^That is\s+/i,'');
+    result.decisionOpeningHeadline=headline(opening.charAt(0).toUpperCase()+opening.slice(1));
+    const contrast=sentences[0].match(/, not (.+?)(?: that |[.!?]|$)/i)?.[1].trim();
+    if(contrast&&contrast.length<=60)result.decisionContrastText=contrast;
     result.headline=headline(sentences.length>1?words(sentences.at(-1)!.split(',')[0]).slice(0,6).join(' '):source.name);
     if(sentences.length>1){
      const second=timed[range.first+words(sentences[0]).length];

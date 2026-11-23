@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createEditorialVisualRevision} from '../src/artifacts/editorial-visual-revision';
+import {hasEditorialReviewSemantics} from '../src/artifacts/editorial-semantics';
 
 function fixture() {
   const evidence=(id:string,path:string)=>({id,job_id:'job',path,title:`Source ${id}`,description:'Actual project material',public_safe:1,rights_status:'owned',privacy_level:'public'});
@@ -87,4 +88,19 @@ test('subsequent renders reuse explicit selections only for the same account, jo
   input.evidence[2].privacy_level='restricted';
   assert.throws(()=>createEditorialVisualRevision({...input,scope_actor_id:'account-one',prior_visual_revision:prior}),{code:'business_validation_failed'});
   assert.throws(()=>createEditorialVisualRevision({...input,scope_actor_id:'account-one',prior_visual_revision:{...prior,selected_evidence_ids:['missing']}}),{code:'business_validation_failed'});
+});
+
+
+test('whole-word decision semantics accepts choose but never mistakes preview for review',()=>{
+  for(const text of ['Choose version two before publishing.','Review this draft.','The script was approved.','Decide whether to continue.','Revisa el guion.','La revisión sigue pendiente.','Aprobación registrada.','Make the call.'])assert.equal(hasEditorialReviewSemantics(text),true,text);
+  for(const text of ['Preview draft','Previewing the screen.','prereview','reviewer','éreview','choosers','version_approve','A source image.'])assert.equal(hasEditorialReviewSemantics(text),false,text);
+  const input=fixture();
+  input.storyboard.storyboard_json.timeline[2].narration='Choose version two before publishing.';
+  const chosen=createEditorialVisualRevision(input);
+  assert.equal(chosen.scene_sources[2].kind,'decision');
+  assert.equal(chosen.scene_sources[2].review_record?.storyboard_approval_id,'board-approval');
+  input.storyboard.storyboard_json.timeline[2].narration='Preview draft';
+  const preview=createEditorialVisualRevision(input);
+  assert.equal(preview.scene_sources[2].kind,'source');
+  assert.equal(preview.scene_sources[2].review_record,undefined);
 });

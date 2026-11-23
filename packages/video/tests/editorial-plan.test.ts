@@ -64,7 +64,7 @@ test('document diagram is bound to another domain claim rather than a packaged C
  const scene=buildContentEditorialFilm(f.input).film.scenes[1];
  assert.deepEqual(scene.documentSteps,['shipment ID','manifest','loading the truck']);
  assert.equal(scene.excerpt,claim);
- assert.equal(scene.excerptKind,'approved_claim');
+ assert.equal(scene.excerptKind,'source_excerpt');
  assert.equal(scene.sourceId,'delivery_document');
  assert.doesNotMatch(JSON.stringify(scene.documentSteps),/Content|schema|business|database|approved|checked/i);
 }));
@@ -83,7 +83,9 @@ test('two unrelated jobs use their own copy and real source identities without p
    assert.deepEqual(result.film.scenes.map(s=>s.kind),['source','document','decision']);
    const displayed=JSON.stringify(result.film);
    assert.doesNotMatch(displayed,/Content Engine|Core invariant|Schema validation|Database write|provider routing/);
-   assert.equal(result.film.scenes[1].excerptKind,'approved_claim');
+   assert.equal(result.film.scenes[0].headline,result.film.scenes[0].sourceName);
+   assert.notEqual(result.film.scenes[0].headline,result.film.scenes[0].caption.map(c=>c.text).join(' '));
+   assert.equal(result.film.scenes[1].excerptKind,'source_excerpt');
    assert.notEqual(result.film.scenes[1].headline,result.film.scenes[1].excerpt);
    assert.notEqual(result.film.scenes[2].headline,result.film.scenes[2].decisionText);
    assert.ok(result.sourceFiles.every(file=>file.startsWith(a.root+path.sep)||file.startsWith(b.root+path.sep)));
@@ -102,7 +104,7 @@ test('measured segment boundaries determine scene cuts and hold the last scene t
  assert.ok(result.validation.scenes.every(s=>s.caption_timing_source==='word_proportion_within_provided_segments'));
 }));
 
-test('captions balance short tails within each supplied segment without crossing its pause',()=>useFixture(f=>{
+test('captions balance short tails and hold only the last group over a short measured pause',()=>useFixture(f=>{
  const eight='A convincing draft still needs a closer look.';
  const grouped=narrationCaptions(eight,2.8);
  assert.deepEqual(grouped.map(c=>c.text.split(' ').length),[4,4]);
@@ -111,9 +113,81 @@ test('captions balance short tails within each supplied segment without crossing
  const result=buildContentEditorialFilm(f.input),captions=result.film.scenes.flatMap(s=>s.caption);
  assert.deepEqual(result.film.scenes[1].caption.map(c=>c.text.split(' ').length),[4,4]);
  assert.ok(captions.every(c=>c.text.split(' ').length>=2&&c.text.split(' ').length<=7));
- assert.ok(captions.every(c=>f.input.speechSegments!.some(segment=>c.start>=segment.start-1e-9&&c.end<=segment.end+1e-9)));
+ assert.ok(captions.every(c=>f.input.speechSegments!.some((segment,index)=>c.start>=segment.start-1e-9&&c.start<segment.end&&c.end<=Math.min(segment.end+.25,f.input.speechSegments![index+1]?.start??segment.end)+1e-9)));
+ for(let index=0;index<captions.length-1;index++)assert.ok(captions[index].end<=captions[index+1].start+1e-9);
+ assert.equal(result.film.scenes[0].caption.at(-1)!.end,2.81);
+ assert.equal(result.film.scenes[1].caption.at(-1)!.end,7.20);
+ assert.equal(result.film.scenes[2].caption.find(c=>c.start<11.38&&c.end>=11.38)!.end,11.50);
  assert.equal(captions.map(c=>c.text).join(' '),f.input.narration);
  assert.ok(result.validation.scenes.every(s=>s.caption_timing_source==='word_proportion_within_provided_segments'));
+}));
+
+test('a caption hold is bounded at a quarter second and does not modify segment timing',()=>useFixture(f=>{
+ f.input.speechSegments![1].start=3.2;
+ const original=structuredClone(f.input.speechSegments);
+ const result=buildContentEditorialFilm(f.input);
+ assert.equal(result.film.scenes[0].caption.at(-1)!.end,2.94);
+ assert.equal(result.validation.scenes[0].narration_end_sec,2.69);
+ assert.deepEqual(f.input.speechSegments,original);
+}));
+
+test('caption phrases prefer punctuation without stranding conjunctions or changing spoken words',()=>{
+ const caveat='That is a check on structure, not a guarantee that every statement is true.';
+ const closing='Read the source, review the claims, and decide whether the story is ready.';
+ for(const [line,lengths] of [[caveat,[6,4,4]],[closing,[6,7]],[closing.replaceAll(',',';'),[6,7]]] as const){
+  const captions=narrationCaptions(line,7);
+  assert.deepEqual(captions.map(c=>c.text.split(' ').length),lengths);
+  assert.equal(captions.map(c=>c.text).join(' '),line);
+  assert.ok(captions.every(c=>!/(?:^|\s)(?:not|and)[,;.!?]?$/.test(c.text)));
+  assert.equal(captions[0].start,0);assert.equal(captions.at(-1)!.end,7);
+ }
+ assert.deepEqual(narrationCaptions('A convincing draft still needs a closer look.',3).map(c=>c.text.split(' ').length),[4,4]);
+});
+
+test('decision contrast quotes only the literal approved negative clause and retains measured phrase timing',()=>useFixture(f=>{
+ const caveat='That is a check on structure, not a guarantee that every statement is true.';
+ const closing='Read the source, review the claims, and decide whether the story is ready.';
+ const line=caveat+' '+closing;
+ f.input.timeline[2].narration=line;f.input.storyboard.timeline[2].narration=line;
+ f.input.narration=f.input.timeline.map(scene=>scene.narration).join(' ');
+ f.input.speechSegments![2].text=caveat;f.input.speechSegments![3].text=closing;
+ const original=structuredClone(f.input),scene=buildContentEditorialFilm(f.input).film.scenes[2];
+ assert.equal(scene.decisionContrastText,'a guarantee');assert.ok(caveat.includes(scene.decisionContrastText!));
+ assert.equal(scene.decisionOpeningHeadline,'A check on structure');
+ assert.deepEqual(scene.caption.map(c=>c.text.split(' ').length),[6,4,4,6,7]);
+ assert.equal(scene.caption[2].end,11.5);assert.equal(scene.caption[3].start,11.5);
+ assert.ok(Math.abs(scene.decisionRevealSec!-(11.5-7.2))<1e-9);
+ assert.deepEqual(f.input,original);
+ f.input.timeline[2].narration='A dispatcher reviews each delivery. The operator releases the route.';
+ f.input.storyboard.timeline[2].narration=f.input.timeline[2].narration;
+ f.input.narration=f.input.timeline.map(scene=>scene.narration).join(' ');f.input.speechSegments=undefined;
+ assert.equal(buildContentEditorialFilm(f.input).film.scenes[2].decisionContrastText,undefined);
+}));
+
+test('document quotes an exact safe rule fragment from the real source and fails closed without one',()=>useFixture(f=>{
+ const claim='Content Engine checks the proposed output against defined rules before saving it.';
+ f.input.timeline[1].narration=claim;f.input.storyboard.timeline[1].narration=claim;
+ f.input.narration=f.input.timeline.map(scene=>scene.narration).join(' ');f.input.speechSegments![1].text=claim;
+ const raw='Core invariant: model/provider output must pass schema validation and business validation before DB writes.';
+ writeFileSync(f.document,'# Architecture\n\n'+raw);
+ f.input.storyboard.editorial_criteria.must_not_read=['provider','DB writes'];
+ const scene=buildContentEditorialFilm(f.input).film.scenes[1];
+ assert.equal(scene.sourceExcerpt,'schema validation and business validation');
+ assert.equal(scene.excerpt,scene.sourceExcerpt);assert.ok(raw.includes(scene.sourceExcerpt!));
+ assert.equal(scene.excerptKind,'source_excerpt');assert.equal(scene.headline,scene.sourceName);
+ assert.notEqual(scene.excerpt,claim);assert.notEqual(scene.headline,claim);
+ assert.deepEqual(scene.documentSteps,['proposed output','defined rules','saving it']);
+ f.input.storyboard.editorial_criteria.must_not_read.push('business validation');
+ rejected(()=>buildContentEditorialFilm(f.input));
+}));
+
+test('safe document fallback stays an exact paragraph and honors actual prohibited phrases',()=>useFixture(f=>{
+ const paragraph='Delivery scans record the destination and receiving time.';
+ writeFileSync(f.document,'# Dispatch\n\n'+paragraph+'\n\nProvider routing is private.');
+ const scene=buildContentEditorialFilm(f.input).film.scenes[1];
+ assert.equal(scene.sourceExcerpt,paragraph);
+ f.input.storyboard.editorial_criteria.must_not_read=['receiving time'];
+ rejected(()=>buildContentEditorialFilm(f.input));
 }));
 
 test('decision reveal follows the second sentence and the end card uses only the retained audio tail',()=>useFixture(f=>{
@@ -122,12 +196,24 @@ test('decision reveal follows the second sentence and the end card uses only the
  const decision=film.scenes[2];
  assert.ok(Math.abs(decision.decisionRevealSec!-(11.50-7.20))<1e-9);
  assert.ok(Math.abs(decision.start+decision.decisionRevealSec!-11.50)<1e-9);
+ assert.equal(decision.decisionOpeningHeadline,'A dispatcher reviews each delivery.');
  assert.ok(Math.abs(film.endCard!.start-15.9)<1e-9);
  assert.deepEqual({...film.endCard,start:15.9},{start:15.9,title:film.brand,line:decision.headline,url:'https://product.example.com'});
  assert.equal(film.duration,20);
  assert.equal(film.scenes.at(-1)!.end,20);
  assert.equal(film.scenes.at(-1)!.caption.at(-1)!.end,15.7);
  assert.deepEqual(f.input,original,'The visual plan never modifies approved narration, source timing, or the storyboard.');
+}));
+
+test('decision opening headline uses the first spoken clause before the measured reveal',()=>useFixture(f=>{
+ const line='That is a check on structure, not a promise of quality. Read the source before you approve.';
+ f.input.timeline[2].narration=line;f.input.storyboard.timeline[2].narration=line;
+ f.input.narration=f.input.timeline.map(scene=>scene.narration).join(' ');
+ f.input.speechSegments![2].text=line.split('. ')[0]+'.';f.input.speechSegments![3].text=line.split('. ')[1];
+ const scene=buildContentEditorialFilm(f.input).film.scenes[2];
+ assert.equal(scene.decisionOpeningHeadline,'A check on structure');
+ assert.equal(scene.headline,'Read the source before you approve.');
+ assert.ok(Math.abs(scene.decisionRevealSec!-(11.5-7.2))<1e-9);
 }));
 
 test('short tails omit end cards and only canonical public HTTPS origins may be displayed',()=>useFixture(f=>{
@@ -187,6 +273,16 @@ test('absent choice never invents a third decision role',()=>useFixture(f=>{
  const result=buildContentEditorialFilm({...f.input,sceneSources:undefined});
  assert.deepEqual(result.film.scenes.map(s=>s.kind),['source','source','source']);
  assert.ok(result.film.scenes.every(s=>!s.decisionText));
+}));
+
+test('shared review semantics accepts a real choice but never misreads Preview as review',()=>useFixture(f=>{
+ function setLine(line:string){f.input.timeline[2].narration=line;f.input.storyboard.timeline[2].narration=line;f.input.narration=f.input.timeline.map(scene=>scene.narration).join(' ');f.input.speechSegments=undefined;}
+ setLine('Choose version two before publishing.');
+ assert.equal(buildContentEditorialFilm(f.input).film.scenes[2].kind,'decision');
+ setLine('Preview draft');
+ rejected(()=>buildContentEditorialFilm(f.input));
+ const result=buildContentEditorialFilm({...f.input,sceneSources:undefined});
+ assert.equal(result.film.scenes[2].kind,'source');assert.equal(result.film.scenes[2].decisionText,undefined);
 }));
 
 test('missing, unreferenced and cross-root sources fail closed',()=>useFixture(f=>{

@@ -1,4 +1,5 @@
 import {createHash, randomUUID} from 'node:crypto';
+import {hasEditorialReviewSemantics} from './editorial-semantics';
 
 export type EditorialEvidenceAsset = {evidence_id:string;kind:'image'|'document';path:string;title:string;description:string;focus?:{x:number;y:number;width:number;height:number}};
 export type EditorialReviewRecord = {job_id:string;script_id:string;storyboard_id:string;script_status:'approved';storyboard_status:'approved';script_approval_id:string;storyboard_approval_id:string};
@@ -66,7 +67,7 @@ export function createEditorialVisualRevision(input:{job_id:string;script:any;st
     const role=[scene.kind,scene.role,scene.beat_kind,scene.scene_template,scene.layout_treatment,scene.shot_recipe?.layout_treatment,scene.shot_recipe?.evidence_treatment,preview?.beat_kind].filter(value=>typeof value==='string').join(' ');
     const documentary=/document|validation|structure|schema|process|method|check/i.test(role);
     const spoken=typeof scene.narration==='string'?scene.narration:'';
-    const decision=/review|approv|decid|decisi|sign.?off|make (?:the|your) call|choose|revis|aprob/i.test(spoken);
+    const decision=hasEditorialReviewSemantics(spoken);
     const originalAsset=assets.find(asset=>(scene.evidence_ids??[]).includes(asset.evidence_id));
     const image=(explicit?images[0]:images.find(asset=>(scene.evidence_ids??[]).includes(asset.evidence_id)))??images[0];
     if(reviewRecord&&decision) {

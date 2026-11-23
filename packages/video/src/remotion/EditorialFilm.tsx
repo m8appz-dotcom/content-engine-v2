@@ -13,21 +13,22 @@ function Caption({scene}:{scene:EditorialScene}){
  return <div style={{position:'absolute',left:72,right:72,bottom:74,minHeight:138,borderTop:`2px solid ${rule}`,paddingTop:26,fontFamily:sans,fontSize:46,lineHeight:1.25,color:ink}}>{active?.text||''}</div>;
 }
 function Source({scene}:{scene:EditorialScene}){
- const frame=useCurrentFrame(),{fps}=useVideoConfig(),p=ease(Math.min(1,frame/(fps*.65)));
+ const frame=useCurrentFrame(),{fps}=useVideoConfig();
  const image=scene.image!;
  const width=936,height=930,fit=Math.min(1.35,width/image.width,height/image.height);
- const focused=Math.min(1.35,Math.max(width/image.focus.width,height/image.focus.height));
- const push=interpolate(frame,[fps*.15,fps*.65],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
- const scale=interpolate(push,[0,1],[fit,Math.max(fit,focused)]);
- // Camera framing uses the intact source capture. No derivative image is made.
- const left=interpolate(push,[0,1],[(width-image.width*fit)/2,(width-image.focus.width*scale)/2-image.focus.x*scale]);
- const top=interpolate(push,[0,1],[(height-image.height*fit)/2,(height-image.focus.height*scale)/2-image.focus.y*scale]);
+ const detail=image.focus.width<image.width||image.focus.height<image.height;
+ const detailScale=Math.min(1.35,width/image.focus.width,430/image.focus.height);
+ const detailWidth=image.focus.width*detailScale,detailHeight=image.focus.height*detailScale;
+ const opacity=interpolate(frame,[fps*.2,fps*.4],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
+ // Context and detail both display the intact source. The inset contains the
+ // entire validated focus rectangle, so no moving crop cuts through its copy.
  return <>
   <div style={{position:'absolute',left:72,right:72,top:170,fontFamily:serif,fontSize:scene.headline.length>48?82:98,lineHeight:1.03,letterSpacing:-2,whiteSpace:'pre-line'}}>{scene.headline}</div>
   <div style={{position:'absolute',left:72,right:72,top:465,height,overflow:'hidden',borderTop:`2px solid ${ink}`,borderBottom:`2px solid ${ink}`,background:'#fff'}}>
-   <div style={{position:'absolute',left,top:top+interpolate(p,[0,1],[26,0]),width:image.width*scale,height:image.height*scale}}><Img src={image.src} style={{width:'100%',height:'100%',filter:'none'}}/></div>
+   <Img src={image.src} style={{position:'absolute',left:(width-image.width*fit)/2,top:(height-image.height*fit)/2,width:image.width*fit,height:image.height*fit}}/>
   </div>
-  <div style={{position:'absolute',left:72,right:72,top:1440,fontFamily:sans,fontSize:38,lineHeight:1.3}}>{scene.sourceName}</div>
+  {detail&&<div style={{position:'absolute',left:72+(width-detailWidth)/2,top:1395-detailHeight,width:detailWidth,height:detailHeight,overflow:'hidden',background:'#fff',outline:`2px solid ${ink}`,opacity}}><Img src={image.src} style={{position:'absolute',left:-image.focus.x*detailScale,top:-image.focus.y*detailScale,width:image.width*detailScale,height:image.height*detailScale}}/></div>}
+  {scene.sourceName!==scene.headline&&<div style={{position:'absolute',left:72,right:72,top:1440,fontFamily:sans,fontSize:38,lineHeight:1.3}}>{scene.sourceName}</div>}
  </>;
 }
 function Document({scene}:{scene:EditorialScene}){
@@ -38,23 +39,22 @@ function Document({scene}:{scene:EditorialScene}){
   <div style={{position:'absolute',left:72,right:72,top:170,fontFamily:serif,fontSize:scene.headline.length>48?82:98,lineHeight:1.03,letterSpacing:-2,whiteSpace:'pre-line'}}>{scene.headline}</div>
   <div style={{position:'absolute',left:72,right:72,top:440,bottom:390}}>
    <Lines><div style={{fontFamily:sans,fontSize:36,letterSpacing:2,marginBottom:42}}>{scene.excerptKind==='approved_claim'?'THE LINKED CLAIM':'FROM THE SOURCE'}</div><div style={{fontFamily:serif,fontSize:scene.excerptKind==='approved_claim'&&(scene.excerpt?.length??0)<=130?76:58,lineHeight:1.17,whiteSpace:'pre-wrap'}}>{scene.excerpt}</div></Lines>
-   {steps.length>0&&<div style={{marginTop:48}}>{steps.map((label,i)=><div key={label} style={{display:'flex',gap:30,alignItems:'baseline',padding:'22px 0',borderTop:`2px solid ${rule}`,opacity:i>active ? 0.38 : 1,transform:`translateY(${i>active?8:0}px)`}}><span style={{fontFamily:sans,fontSize:34,width:55}}>{String(i+1).padStart(2,'0')}</span><span style={{fontFamily:serif,fontSize:54,lineHeight:1.15}}>{label}</span></div>)}</div>}
+   {steps.length>0&&<div style={{marginTop:48}}><div style={{fontFamily:sans,fontSize:34,letterSpacing:2,marginBottom:26}}>THE CLAIM</div>{steps.map((label,i)=><div key={label} style={{display:'flex',gap:30,alignItems:'baseline',padding:'22px 0',borderTop:`2px solid ${rule}`,opacity:i>active ? 0.38 : 1,transform:`translateY(${i>active?8:0}px)`}}><span style={{fontFamily:sans,fontSize:34,width:55}}>{String(i+1).padStart(2,'0')}</span><span style={{fontFamily:serif,fontSize:54,lineHeight:1.15}}>{label}</span></div>)}</div>}
   </div>
-  <div style={{position:'absolute',left:72,right:72,top:1510,fontFamily:sans,fontSize:36,lineHeight:1.3}}>{scene.sourceName}</div>
+  {scene.sourceName!==scene.headline&&<div style={{position:'absolute',left:72,right:72,top:1510,fontFamily:sans,fontSize:36,lineHeight:1.3}}>{scene.sourceName}</div>}
  </>;
 }
 function Decision({scene}:{scene:EditorialScene}){
  const frame=useCurrentFrame(),{fps}=useVideoConfig(),p=ease(Math.min(1,frame/(fps*.45)));
  const revealed=interpolate(frame,[(scene.decisionRevealSec??0)*fps,(scene.decisionRevealSec??0)*fps+fps*.35],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
  return <>
-  <div style={{position:'absolute',left:72,right:72,top:170,fontFamily:serif,fontSize:scene.headline.length>48?82:98,lineHeight:1.03,letterSpacing:-2,whiteSpace:'pre-line',transform:`translateY(${(1-p)*14}px)`}}>{scene.headline}</div>
-  <div style={{position:'absolute',left:72,right:72,top:535,fontFamily:serif,fontSize:64,lineHeight:1.15}}>{scene.decisionText}</div>
-  <div style={{position:'absolute',left:72,right:72,top:840,opacity:revealed,transform:`translateY(${(1-revealed)*16}px)`}}>
-   <Lines><div style={{fontFamily:sans,fontSize:35,letterSpacing:2,marginBottom:32}}>THIS PROJECT'S REVIEW RECORD</div>
+  <div style={{position:'absolute',left:72,right:72,top:170,fontFamily:serif,fontSize:scene.headline.length>48?82:98,lineHeight:1.03,letterSpacing:-2,whiteSpace:'pre-line',transform:`translateY(${(1-p)*14}px)`}}>{revealed===0?(scene.decisionOpeningHeadline??scene.headline):scene.headline}</div>
+  {revealed===0&&(scene.decisionContrastText?<><div style={{position:'absolute',left:72,top:530,fontFamily:serif,fontSize:210,lineHeight:1}}>≠</div><div style={{position:'absolute',left:72,right:72,top:840,fontFamily:serif,fontSize:100,lineHeight:1.1}}>{scene.decisionContrastText}</div></>:<div style={{position:'absolute',left:72,right:72,top:535,fontFamily:serif,fontSize:64,lineHeight:1.15}}>{scene.decisionText}</div>)}
+  <div style={{position:'absolute',left:72,right:72,top:535,opacity:revealed,transform:`translateY(${(1-revealed)*16}px)`}}>
+   <Lines><div style={{fontFamily:sans,fontSize:35,letterSpacing:2,marginBottom:32}}>RECORDED APPROVALS</div>
    {[['Script',scene.scriptApproved],['Storyboard',scene.storyboardApproved]].map(([name,approved])=><div key={String(name)} style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',padding:'36px 0',borderBottom:`2px solid ${rule}`}}><span style={{fontFamily:serif,fontSize:65}}>{name}</span><span style={{fontFamily:sans,fontSize:42}}>{approved?'Approved':'Needs review'}</span></div>)}
    </Lines>
   </div>
-  <div style={{position:'absolute',left:72,right:72,top:1370,fontFamily:serif,fontSize:57,lineHeight:1.2,opacity:revealed}}>{scene.decisionActions?.map(line=><div key={line}>{line}</div>)}</div>
  </>;
 }
 function Scene({scene,index,brand,total}:{scene:EditorialScene;index:number;brand:string;total:number}){
