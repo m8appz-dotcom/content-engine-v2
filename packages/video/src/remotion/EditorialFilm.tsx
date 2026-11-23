@@ -17,7 +17,7 @@ function Source({scene}:{scene:EditorialScene}){
  const image=scene.image!;
  const width=936,height=930,fit=Math.min(1.35,width/image.width,height/image.height);
  const focused=Math.min(1.35,Math.max(width/image.focus.width,height/image.focus.height));
- const push=interpolate(frame,[fps*.8,Math.max(fps,((scene.end-scene.start)-.4)*fps)],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
+ const push=interpolate(frame,[fps*.15,fps*.65],[0,1],{extrapolateLeft:'clamp',extrapolateRight:'clamp'});
  const scale=interpolate(push,[0,1],[fit,Math.max(fit,focused)]);
  // Camera framing uses the intact source capture. No derivative image is made.
  const left=interpolate(push,[0,1],[(width-image.width*fit)/2,(width-image.focus.width*scale)/2-image.focus.x*scale]);
