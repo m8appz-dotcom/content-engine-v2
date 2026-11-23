@@ -2,7 +2,7 @@
 
 A fluent script can make a claim its source does not support. Content Engine separates a candidate script, its evidence references and the decision to approve a revision. Editing a reviewed script invalidates that revision's approval.
 
-[Open the original app](https://content.kennethyepez.com/app) · [Production workflow](ORIGINAL-APP.md) · [Earlier example screens](PRODUCT.md) · [Offline contract output](examples/pipeline-output.json)
+[Open the original app](https://content.kennethyepez.com/app) · [Production workflow](ORIGINAL-APP.md) · [Current application screens](PRODUCT.md) · [Offline contract output](examples/pipeline-output.json)
 
 ## Responsibility and decisions
 
@@ -38,4 +38,4 @@ The isolated [HTTPS workspace](https://content.kennethyepez.com) is deployed wit
 
 The [original-app integration](https://github.com/m8appz-dotcom/content-engine-v2/pull/11) connects real model generation, English narration, the native renderer and protected MP4 playback. An isolated component run produced a schema-valid angle and script and a 26-second narrated video using public project sources. This component run did not create human approvals and is separate from browser acceptance.
 
-The original app is deployed with the existing account and passkey store retained. The holder's existing sign-in, review of a concrete script and storyboard, and final rendered playback remain the acceptance steps. No additional authenticator is required to demonstrate the product. No customer outcome or migration of an unrelated active service is claimed.
+The original app is deployed with the existing account and passkey store retained. On November 22, the holder signed in, approved a concrete English script and three-scene storyboard, and tested the resulting 20-second MP4. Listening exposed narration defects that file checks missed. After correction, the app rendered a new immutable draft, ran checks for that version and played the complete result; the holder confirmed the full audio. The [acceptance record](ORIGINAL-APP.md#acceptance-status) separates this workflow test from unmeasured provider benchmarks. No additional authenticator is required to demonstrate the product. No customer outcome or migration of an unrelated active service is claimed.
